@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shift Card</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1b2530">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* VOICE: plain, workmanlike, a shop document that gets signed every day
+   IDEA: a maintenance work card. Each habit is a line item you sign off
+   PICTURE: today's card itself, with a 4-week sign-off strip as the record
+   COLOUR and TYPE: white card, hangar slate ink, safety yellow stamp, green signed; system condensed + system sans, no network
+   LAYOUT: card first; history, this week and parking lot beside it on wide screens, below on phones */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef1f3,#14181c);--card:light-dark(#ffffff,#1d2328);--ink:light-dark(#1b2530,#e9eef2);
+--mute:light-dark(#5b6873,#9aa7b2);--line:light-dark(#d5dce2,#2f3840);--hi:#f2b705;--hiInk:#1b2530;
+--ok:light-dark(#1f7a4d,#4cc38a);--okBg:light-dark(#e6f4ec,#173528);--miss:light-dark(#f6e1dc,#3a2420)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip}
+h1,h2{font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif;font-weight:700;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:clamp(34px,6vw,48px)}h2{font-size:24px;margin-bottom:10px}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(18px,3vw,40px) max(4vw,16px) 48px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:20px}
+.sub{color:var(--mute);margin:6px 0 0;font-size:15px}
+.streak{text-align:right}.streak b{display:block;font:700 clamp(40px,8vw,60px)/1 "Arial Narrow","Roboto Condensed",Arial,sans-serif;color:var(--ok)}
+.streak span{color:var(--mute);font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.streak{text-align:left}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:clamp(16px,2.4vw,26px);margin-bottom:20px}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:6px;flex-wrap:wrap}
+.nav{display:flex;align-items:center;gap:6px}
+.nav button{width:44px;height:44px}.date{font:700 22px "Arial Narrow","Roboto Condensed",Arial,sans-serif;min-width:9.5em;text-align:center}
+button{font:inherit;font-size:15px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 14px;cursor:pointer}
+button:hover{border-color:var(--mute)}button.main{background:var(--ink);color:var(--card);border-color:var(--ink)}
+:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.count{font-size:15px;color:var(--mute)}.count b{color:var(--ink)}
+ul{list-style:none;margin:0;padding:0}
+.item{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px dashed var(--line);cursor:pointer;min-height:56px}
+.item input{position:absolute;opacity:0;pointer-events:none}
+.box{width:28px;height:28px;border:2px solid var(--ink);border-radius:4px;display:grid;place-items:center}
+.item{width:100%;text-align:left;background:transparent;border:0;border-bottom:1px dashed var(--line);border-radius:0;font:inherit;color:inherit}
+.item.na .box{border-color:var(--mute);background:var(--line)}.item.na .stamp{border-color:var(--mute);color:var(--mute)}.item.na .box::after{content:"";width:12px;height:3px;background:var(--mute)}
+.item.on .box{background:var(--ok);border-color:var(--ok)}
+.item.on .box::after{content:"";width:12px;height:7px;border:3px solid #fff;border-top:0;border-right:0;transform:translateY(-2px) rotate(-45deg)}
+.stamp{font:700 15px "Arial Narrow","Roboto Condensed",Arial,sans-serif;letter-spacing:.02em;padding:2px 8px;border:2px solid transparent;border-radius:4px;transform:rotate(-4deg);white-space:nowrap}
+.item.on .stamp{border-color:var(--ok);color:var(--ok)}
+
+.fields{display:grid;gap:14px;margin-top:18px}
+label.f{display:grid;gap:6px;font-weight:600;font-size:15px}
+input[type=text],textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{min-height:76px;resize:vertical}
+.hint{font-weight:400;color:var(--mute);font-size:13px}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.dow{font-size:13px;color:var(--mute);text-align:center}
+.cell{aspect-ratio:1;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;font-size:13px;color:var(--mute);background:transparent;padding:0;min-height:0}
+.cell.full{background:var(--ok);border-color:var(--ok);color:#fff}
+.cell.part{background:var(--okBg);color:var(--ink)}
+.cell.miss{background:var(--miss);color:var(--ink)}
+.cell.off{opacity:.45}.cell.today{outline:2px solid var(--hi);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mute);margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px;border:1px solid var(--line)}
+.top3 li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center;margin-bottom:8px}
+.top3 input[type=checkbox],.chk{width:24px;height:24px;margin:0 auto;accent-color:var(--ok)}
+.top3 li.done input[type=text]{text-decoration:line-through;color:var(--mute)}
+.park li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)}
+.park li span{overflow-wrap:anywhere}.row{display:flex;gap:8px;margin-top:10px}
+.empty{color:var(--mute);font-size:15px;padding:6px 0}
+.banner{background:var(--hi);color:var(--hiInk);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:15px;display:none}
+details{margin-top:16px}summary{cursor:pointer;color:var(--mute);font-size:15px;min-height:44px;display:flex;align-items:center}
+.foot{color:var(--mute);font-size:14px;margin-top:4px}
+@media(prefers-reduced-motion:no-preference){.item.on .stamp{animation:stamp .25s ease-out}@keyframes stamp{from{transform:scale(1.6) rotate(-4deg);opacity:0}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>Shift card</h1><p class="sub">Sign off the end of every shift. Tap once to sign, again for N/A, again to clear.</p></div>
+    <div class="streak"><b id="streak">0</b><span>workdays in a row, fully signed</span></div>
+  </div>
+  <div class="banner" id="banner"></div>
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="cardhead">
+          <div class="nav"><button id="prev" aria-label="Previous day">&#8249;</button><div class="date" id="date"></div><button id="next" aria-label="Next day">&#8250;</button></div>
+          <div class="count" id="count"></div>
+        </div>
+        <ul id="list"></ul>
+        <div class="fields">
+          <label class="f">Open work <span class="hint">One line per job still in progress: the job, where it stands, the next step.</span><textarea id="openwork"></textarea></label>
+          <label class="f">Tomorrow's first task <input type="text" id="first" placeholder="The one thing you start with"></label>
+          <label class="f">Anything bugging me? <span class="hint">Write it here the same day. If it's still here in two days, say it out loud to someone.</span><textarea id="bugging"></textarea></label>
+          <label class="f">One win today <input type="text" id="win"></label>
+        </div>
+        <details><summary>Edit the checklist</summary>
+          <label class="f" style="margin-top:8px">One item per line<textarea id="habitsTxt" style="min-height:150px"></textarea></label>
+          <div class="row"><button class="main" id="saveHabits">Save checklist</button></div>
+        </details>
+      </section>
+    </div>
+    <div>
+      <section class="panel">
+        <h2>Last four weeks</h2>
+        <div class="strip" id="dows"></div>
+        <div class="strip" id="strip" style="margin-top:6px"></div>
+        <div class="legend"><span><i style="background:var(--ok)"></i>All signed</span><span><i style="background:var(--okBg)"></i>Partly</span><span>N/A counts as signed</span><span><i style="background:var(--miss)"></i>Workday, nothing logged</span></div>
+      </section>
+      <section class="panel">
+        <h2>This week's top three</h2>
+        <ul class="top3" id="top3"></ul>
+        <p class="foot">Three things. Everything else goes in the parking lot.</p>
+      </section>
+      <section class="panel">
+        <h2>Parking lot</h2>
+        <ul class="park" id="park"></ul>
+        <form class="row" id="parkForm"><input type="text" id="parkIn" placeholder="An idea or project for later" aria-label="Add to parking lot"><button class="main">Add</button></form>
+        <p class="foot">Look at this on Fridays, not during the week.</p>
+      </section>
+      <section class="panel">
+        <h2>Your data</h2>
+        <p class="foot" style="margin-top:0">Everything stays on this device. The page never sends your entries anywhere. Download a backup now and then, since clearing browser data erases it.</p>
+        <div class="row" style="flex-wrap:wrap"><button id="dl">Download backup</button><button id="restoreBtn">Restore backup</button><input type="file" id="restore" accept=".json,application/json" hidden><button id="copy">Copy last 2 weeks</button></div>
+        <p class="foot" id="dataMsg" aria-live="polite"></p>
+        <p class="foot">Want a second opinion? "Copy last 2 weeks" puts a plain-text summary on your clipboard. Paste it to whoever you choose, only when you choose.</p>
+      </section>
+    </div>
+  </div>
+</div>
+<script>
+{
+const DEF=[{id:'time',label:'Logged my time'},{id:'board',label:'Updated the task board'},{id:'verify',label:'Everything I closed today was checked against the card or manual at the moment I signed it'},{id:'open',label:'Wrote a status note for every open multi-day job'},{id:'first',label:"Wrote down tomorrow's first task"},{id:'speak',label:"Raised anything that's bugging me, or nothing is"}];
+const $=s=>document.getElementById(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parse=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(k,n)=>{const d=parse(k);d.setDate(d.getDate()+n);return key(d)};
+const workday=k=>{const w=parse(k).getDay();return w>=1&&w<=4};
+const weekKey=k=>{const d=parse(k);const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=t.getUTCFullYear();const w=Math.ceil(((t-Date.UTC(y,0,1))/864e5+1)/7);return `${y}-W${String(w).padStart(2,'0')}`};
+const TODAY=key(new Date());const WK=weekKey(TODAY);
+let db=null,cur=TODAY,habits=DEF,parking=[],days=new Map(),week={items:[{t:'',done:false},{t:'',done:false},{t:'',done:false}]};
+const dirty=new Set(),timers={},queue={};
+const banner=t=>{const b=$('banner');b.textContent=t;b.style.display=t?'block':'none'};
+const LS='shiftcard.v1';let store={days:{},weeks:{},config:null};
+try{const raw=localStorage.getItem(LS);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')store={days:o.days||{},weeks:o.weeks||{},config:o.config||null}}}catch(e){}
+const persist=()=>{try{localStorage.setItem(LS,JSON.stringify(store))}catch(e){banner("This browser isn't letting the page save. Use Download backup so you don't lose today's entry.")}};
+const write=(path,data)=>{const[col,id]=path.split('/');if(col==='days')store.days[id]=data;else if(col==='weeks')store.weeks[id]=data;else store.config=data;persist();dirty.delete(path)};
+const later=(path,fn,ms=700)=>{dirty.add(path);clearTimeout(timers[path]);timers[path]=setTimeout(()=>{delete timers[path];write(path,fn())},ms)};
+const dayOf=k=>days.get(k)||{date:k,checks:{},first:'',bugging:'',win:''};
+const done=d=>habits.filter(h=>d.checks&&d.checks[h.id]).length;
+const nextState=v=>v===true?'na':v==='na'?false:true;
+const dayData=()=>{const d=dayOf(cur);return{date:cur,checks:{...(d.checks||{})},first:d.first||'',openwork:d.openwork||'',bugging:d.bugging||'',win:d.win||'',total:habits.length,done:done(d),workday:workday(cur)}};
+const setVal=(id,v)=>{const el=$(id);if(document.activeElement!==el&&el.value!==v)el.value=v};
+function streak(){let k=TODAY,n=0;const t=dayOf(k);if(!(t.checks&&done(t)===habits.length))k=addDays(k,-1);for(let i=0;i<400;i++,k=addDays(k,-1)){const d=days.get(k);if(d&&done(d)===habits.length){n++;continue}if(!d&&!workday(k))continue;break}return n}
+function render(){
+  const d=parse(cur);$('date').textContent=(cur===TODAY?'Today, ':'')+d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  $('next').disabled=cur>=TODAY;
+  const day=dayOf(cur);const n=done(day);
+  $('count').innerHTML=`<b>${n}</b> of ${habits.length} signed`;
+  $('list').innerHTML=habits.map(h=>{const v=day.checks&&day.checks[h.id];const on=v===true,na=v==='na';return `<li><button type="button" class="item${on?' on':''}${na?' na':''}" data-h="${esc(h.id)}" aria-pressed="${on||na}"><span class="box"></span><span>${esc(h.label)}</span><span class="stamp">${on?'Signed':na?'N/A':''}</span></button></li>`}).join('');
+  setVal('first',day.first||'');setVal('openwork',day.openwork||'');setVal('bugging',day.bugging||'');setVal('win',day.win||'');
+  if(document.activeElement!==$('habitsTxt'))$('habitsTxt').value=habits.map(h=>h.label).join('\n');
+  $('streak').textContent=streak();
+  let s0=addDays(TODAY,-27);const began=[...days.keys()].sort()[0]||TODAY;if(began>s0)s0=began;const s1=addDays(TODAY,-27);const off=(parse(s1).getDay()+6)%7;const first=addDays(s1,-off);
+  $('dows').innerHTML=['M','T','W','T','F','S','S'].map(x=>`<div class="dow">${x}</div>`).join('');
+  let cells='';for(let k=first;k<=TODAY;k=addDays(k,1)){const x=days.get(k);let c='';if(x){const m=done(x);c=m===habits.length?'full':m>0?'part':(workday(k)&&k<TODAY&&k>=s0?'miss':'')}else if(workday(k)&&k<TODAY&&k>=s0)c='miss';if(!workday(k)&&!x)c+=' off';if(k===TODAY)c+=' today';if(k===cur)c+=' sel';cells+=`<button class="cell ${c}" data-k="${k}" aria-label="${k}">${parse(k).getDate()}</button>`}
+  $('strip').innerHTML=cells;
+  $('top3').innerHTML=week.items.map((it,i)=>`<li class="${it.done?'done':''}"><input type="checkbox" class="chk" data-w="${i}"${it.done?' checked':''} aria-label="Done"><input type="text" data-wt="${i}" placeholder="Priority ${i+1}" value="${esc(it.t)}"></li>`).join('');
+  $('park').innerHTML=parking.length?parking.map((p,i)=>`<li><span>${esc(p)}</span><button data-p="${i}" aria-label="Remove">Remove</button></li>`).join(''):'<li class="empty">Nothing parked.</li>';
+}
+$('list').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(!b)return;const h=b.dataset.h;const d=dayData();d.checks[h]=nextState(d.checks[h]);d.done=habits.filter(x=>d.checks[x.id]).length;days.set(cur,d);render();clearTimeout(timers['days/'+cur]);dirty.add('days/'+cur);write('days/'+cur,d)});
+['first','openwork','bugging','win'].forEach(id=>$(id).addEventListener('input',e=>{const d=dayData();d[id]=e.target.value;days.set(cur,d);const k=cur;later('days/'+k,()=>({...dayOf(k)}))}));
+$('prev').onclick=()=>{cur=addDays(cur,-1);render()};$('next').onclick=()=>{if(cur<TODAY){cur=addDays(cur,1);render()}};
+$('strip').addEventListener('click',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k){cur=k;render();window.scrollTo({top:0,behavior:'smooth'})}});
+$('top3').addEventListener('change',e=>{const i=e.target.dataset.w;if(i==null)return;week.items[i].done=e.target.checked;render();write('weeks/'+WK,{week:WK,items:week.items})});
+$('top3').addEventListener('input',e=>{const i=e.target.dataset.wt;if(i==null)return;week.items[i].t=e.target.value;later('weeks/'+WK,()=>({week:WK,items:week.items}))});
+const saveCfg=()=>write('config/main',{habits,parking});
+$('parkForm').addEventListener('submit',e=>{e.preventDefault();const v=$('parkIn').value.trim();if(!v)return;parking=[...parking,v];$('parkIn').value='';render();saveCfg()});
+$('park').addEventListener('click',e=>{const i=e.target.dataset.p;if(i==null)return;parking=parking.filter((_,j)=>j!=i);render();saveCfg()});
+$('saveHabits').onclick=()=>{const lines=$('habitsTxt').value.split('\n').map(s=>s.trim()).filter(Boolean);if(!lines.length)return;const used=new Set();habits=lines.map(l=>{const old=habits.find(h=>h.label===l);let id=old?old.id:l.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40)||'item';while(used.has(id))id+='-x';used.add(id);return{id,label:l}});render();saveCfg()};
+render();
+const load=()=>{days=new Map(Object.entries(store.days||{}).filter(([k,v])=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==='object'));
+  const c=store.config;if(c&&Array.isArray(c.habits)&&c.habits.length)habits=c.habits.map(h=>({id:String(h.id),label:String(h.label)}));parking=c&&Array.isArray(c.parking)?c.parking.map(String):[];
+  const w=store.weeks[WK];if(w&&Array.isArray(w.items))week.items=[0,1,2].map(i=>({t:String((w.items[i]||{}).t||''),done:!!(w.items[i]||{}).done}));render()};
+load();
+const msg=t=>{$('dataMsg').textContent=t};
+$('dl').onclick=()=>{try{const b=new Blob([JSON.stringify(store,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='shift-card-backup-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove();msg('Backup downloaded.')}catch(e){msg("Couldn't create the backup file in this browser.")}};
+$('restoreBtn').onclick=()=>$('restore').click();
+$('restore').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!o||typeof o.days!=='object')throw 0;store={days:o.days||{},weeks:o.weeks||{},config:o.config||null};persist();load();msg('Backup restored.')}catch(err){msg("That file isn't a shift card backup.")}e.target.value=''};
+$('copy').onclick=async()=>{const lines=['Shift card, last 14 days (workdays Mon to Thu)','Streak: '+streak()];for(let i=13;i>=0;i--){const k=addDays(TODAY,-i);const d=days.get(k);if(!d&&!workday(k))continue;if(!d){lines.push(k+': nothing logged');continue}const miss=habits.filter(h=>!(d.checks&&d.checks[h.id])).map(h=>h.label);let l=k+': '+done(d)+'/'+habits.length+(miss.length?' (missed: '+miss.join('; ')+')':'');if(d.openwork)l+=' | open: '+d.openwork.replace(/\n/g,'; ');if(d.bugging)l+=' | bugging: '+d.bugging;if(d.win)l+=' | win: '+d.win;lines.push(l)}
+  const wk=week.items.filter(x=>x.t).map(x=>(x.done?'[done] ':'[open] ')+x.t);if(wk.length)lines.push('This week: '+wk.join('; '));
+  const text=lines.join('\n');try{await navigator.clipboard.writeText(text);msg('Copied. Paste it wherever you like.')}catch(e){const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');msg('Copied.')}catch(_){msg("Couldn't copy in this browser.")}t.remove()}};
+}
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
+</body>
+</html>
