@@ -78,7 +78,8 @@ details{margin-top:16px}summary{cursor:pointer;color:var(--mute);font-size:15px;
 .view[hidden]{display:none}
 .now{display:grid;gap:10px;padding:14px;border-radius:8px;background:var(--bg);margin-bottom:12px}
 .now .run{font:700 22px "Arial Narrow","Roboto Condensed",Arial,sans-serif}.now .run small{font:400 14px system-ui,sans-serif;color:var(--mute);display:block}
-.now form{display:flex;gap:8px}.now form input{flex:1}
+.punch{min-height:64px;font-size:19px;font-weight:700;width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chips button{min-height:38px;font-size:14px;padding:0 12px;border-radius:19px}
 .log li{display:grid;grid-template-columns:7.5em minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
 .log .t{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:15px}.log .t small{display:block;color:var(--mute);font-size:13px}
 .log .w{overflow-wrap:anywhere}.log li.gap{color:var(--mute);font-size:14px;grid-template-columns:7.5em minmax(0,1fr)}
@@ -119,8 +120,9 @@ input[type=time],input[type=date]{font:inherit;font-size:16px;color:var(--ink);b
       <section class="panel">
         <h2>Time log</h2>
         <div class="now">
-          <div class="run" id="running">Nothing running<small>Start what you're doing now. Starting the next thing ends this one.</small></div>
-          <form id="startForm"><input type="text" id="startIn" placeholder="What are you doing now?" aria-label="What are you doing now"><button class="main">Start</button></form>
+          <div class="run" id="running">Nothing running<small>Tap New task now when you start something. It ends whatever was running.</small></div>
+          <button class="main punch" id="punch">New task now</button>
+          <div id="whatBox" hidden><label class="f">What are you working on?<input type="text" id="runWhat" placeholder="Type it, or tap a recent one" enterkeyhint="done"></label><div class="chips" id="chips"></div></div>
           <button id="stopBtn" hidden>Stop the current entry</button>
         </div>
         <div class="sum" id="logSum"></div>
@@ -264,28 +266,35 @@ const nowT=()=>hm(new Date());
 function renderLog(){
   const k=cur,arr=logOf(k),isToday=k===TODAY;
   const run=isToday?arr.find(e=>!e.end):null;
-  $('startForm').hidden=!isToday;
+  $('punch').hidden=!isToday;$('whatBox').hidden=!run;if(run&&document.activeElement!==$('runWhat'))$('runWhat').value=run.what||'';renderChips(run);
   $('stopBtn').hidden=!run;
-  if(run){const el=Math.max(0,mins(nowT())-mins(run.start));$('running').innerHTML=`${esc(run.what)}<small>Since ${fmt12(run.start)}, ${fmtDur(el)} so far</small>`}
+  if(run){const el=Math.max(0,mins(nowT())-mins(run.start));$('running').innerHTML=`${run.what?esc(run.what):'Untitled task'}<small>Since ${fmt12(run.start)}, ${fmtDur(el)} so far</small>`}
   else $('running').innerHTML=isToday?'Nothing running<small>Start what you\'re doing now. Starting the next thing ends this one.</small>':'Past day<small>Add or fix entries below.</small>';
   let total=0,gaps=0,rows='';
   arr.forEach((e,i)=>{
     const end=e.end||(isToday?nowT():e.start);const d=Math.max(0,mins(end)-mins(e.start));total+=d;
     if(i>0){const pe=arr[i-1].end;if(pe&&mins(e.start)>mins(pe)){const g=mins(e.start)-mins(pe);gaps+=g;rows+=`<li class="gap"><span class="t">${fmt12(pe)}</span><span class="w">${fmtDur(g)} not logged</span></li>`}}
     if(i===editing){rows+=`<li><div class="ed"><label class="f">From<input type="time" data-ef="start" value="${esc(e.start)}"></label><label class="f">To<input type="time" data-ef="end" value="${esc(e.end||'')}"></label><input type="text" data-ef="what" value="${esc(e.what)}" aria-label="What"><button class="main" data-save="${i}">Save</button><button data-del="${i}">Delete</button></div></li>`}
-    else rows+=`<li class="${e.end?'':'running'}"><span class="t">${fmt12(e.start)}<small>${fmtDur(d)}</small></span><span class="w">${esc(e.what)}</span><button data-edit="${i}" aria-label="Edit entry">Edit</button></li>`;
+    else rows+=`<li class="${e.end?'':'running'}"><span class="t">${fmt12(e.start)}<small>${fmtDur(d)}</small></span><span class="w">${e.what?esc(e.what):'<em>Untitled</em>'}</span><button data-edit="${i}" aria-label="Edit entry">Edit</button></li>`;
   });
   $('log').innerHTML=rows||'<li class="empty" style="display:block">No entries yet.</li>';
   const span=arr.length?Math.max(0,mins(arr[arr.length-1].end||(isToday?nowT():arr[arr.length-1].start))-mins(arr[0].start)):0;
   $('logSum').innerHTML=arr.length?`<span>Logged <b>${fmtDur(total)}</b></span><span>Gaps <b>${fmtDur(gaps)}</b></span><span>First to last <b>${fmtDur(span)}</b></span>`:'';
 }
-$('startForm').addEventListener('submit',e=>{e.preventDefault();const v=$('startIn').value.trim();if(!v)return;const arr=[...logOf(TODAY)];const t=nowT();arr.forEach(x=>{if(!x.end)x.end=t});arr.push({start:t,end:null,what:v});saveLog(TODAY,arr);$('startIn').value='';renderLog()});
+const recent=()=>{const seen=new Set(),out=[];const ks=Object.keys(store.logs).sort().reverse();for(const k of ks){for(const e of [...logOf(k)].reverse()){const w=(e.what||'').trim();if(w&&!seen.has(w.toLowerCase())){seen.add(w.toLowerCase());out.push(w)}if(out.length>=6)return out}}return out};
+function renderChips(run){if(!run){$('chips').innerHTML='';return}$('chips').innerHTML=recent().filter(w=>w!==run.what).map(w=>`<button type="button" data-chip="${esc(w)}">${esc(w)}</button>`).join('')}
+const setRunWhat=v=>{const arr=[...logOf(TODAY)];const r=arr.find(x=>!x.end);if(!r)return;r.what=v;saveLog(TODAY,arr)};
+$('punch').onclick=()=>{const arr=[...logOf(TODAY)];const t=nowT();arr.forEach(x=>{if(!x.end)x.end=t});const prev=arr.filter(x=>x.start===t&&!x.what);arr.push({start:t,end:null,what:''});saveLog(TODAY,arr.filter(x=>!(prev.includes(x)&&x.end===t&&x.start===t)));editing=-1;renderLog();$('runWhat').value='';$('runWhat').focus()};
+let whatT;$('runWhat').addEventListener('input',e=>{clearTimeout(whatT);const v=e.target.value;whatT=setTimeout(()=>{setRunWhat(v.trim());renderLog()},600)});
+$('runWhat').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();clearTimeout(whatT);setRunWhat(e.target.value.trim());e.target.blur();renderLog()}});
+$('runWhat').addEventListener('blur',e=>{clearTimeout(whatT);setRunWhat(e.target.value.trim());renderLog()});
+$('chips').addEventListener('click',e=>{const b=e.target.closest('[data-chip]');if(!b)return;$('runWhat').value=b.dataset.chip;setRunWhat(b.dataset.chip);renderLog()});
 $('stopBtn').onclick=()=>{const arr=[...logOf(TODAY)];arr.forEach(x=>{if(!x.end)x.end=nowT()});saveLog(TODAY,arr);renderLog()};
 $('addForm').addEventListener('submit',e=>{e.preventDefault();const f=$('addFrom').value,t=$('addTo').value,w=$('addWhat').value.trim();if(!f||!t||!w)return;if(mins(t)<=mins(f)){$('logMsg').textContent='The end time has to be after the start time.';return}const arr=[...logOf(cur),{start:f,end:t,what:w}];saveLog(cur,arr);$('addFrom').value=t;$('addTo').value='';$('addWhat').value='';$('logMsg').textContent='';renderLog()});
 $('log').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const arr=[...logOf(cur)];
   if(b.dataset.edit!=null){editing=+b.dataset.edit;renderLog();return}
   if(b.dataset.del!=null){arr.splice(+b.dataset.del,1);editing=-1;saveLog(cur,arr);renderLog();return}
-  if(b.dataset.save!=null){const li=b.closest('li');const g=n=>li.querySelector(`[data-ef="${n}"]`).value;const s0=g('start'),e0=g('end'),w=g('what').trim();if(!s0||!w)return;if(e0&&mins(e0)<=mins(s0)){$('logMsg').textContent='The end time has to be after the start time.';return}arr[+b.dataset.save]={start:s0,end:e0||null,what:w};editing=-1;$('logMsg').textContent='';saveLog(cur,arr);renderLog()}});
+  if(b.dataset.save!=null){const li=b.closest('li');const g=n=>li.querySelector(`[data-ef="${n}"]`).value;const s0=g('start'),e0=g('end'),w=g('what').trim();if(!s0)return;if(e0&&mins(e0)<=mins(s0)){$('logMsg').textContent='The end time has to be after the start time.';return}arr[+b.dataset.save]={start:s0,end:e0||null,what:w};editing=-1;$('logMsg').textContent='';saveLog(cur,arr);renderLog()}});
 $('copyLog').onclick=async()=>{const arr=logOf(cur);const lines=[cur].concat(arr.map(e=>`${fmt12(e.start)} to ${e.end?fmt12(e.end):'now'}  ${fmtDur(Math.max(0,mins(e.end||nowT())-mins(e.start)))}  ${e.what}`));const text=lines.join('\n');try{await navigator.clipboard.writeText(text);$('logMsg').textContent='Copied.'}catch(err){const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');$('logMsg').textContent='Copied.'}catch(_){$('logMsg').textContent="Couldn't copy in this browser."}t.remove()}};
 setInterval(()=>{if(!$('v-today').hidden&&cur===TODAY&&editing<0)renderLog()},30000);
 
