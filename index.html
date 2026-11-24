@@ -73,6 +73,36 @@ textarea{min-height:76px;resize:vertical}
 .banner{background:var(--hi);color:var(--hiInk);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:15px;display:none}
 details{margin-top:16px}summary{cursor:pointer;color:var(--mute);font-size:15px;min-height:44px;display:flex;align-items:center}
 .foot{color:var(--mute);font-size:14px;margin-top:4px}
+.tabs{display:flex;gap:8px;margin:0 0 18px;overflow-x:auto}
+.tabs button{flex:none;font-weight:600}.tabs button[aria-selected=true]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.view[hidden]{display:none}
+.now{display:grid;gap:10px;padding:14px;border-radius:8px;background:var(--bg);margin-bottom:12px}
+.now .run{font:700 22px "Arial Narrow","Roboto Condensed",Arial,sans-serif}.now .run small{font:400 14px system-ui,sans-serif;color:var(--mute);display:block}
+.now form{display:flex;gap:8px}.now form input{flex:1}
+.log li{display:grid;grid-template-columns:7.5em minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.log .t{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:15px}.log .t small{display:block;color:var(--mute);font-size:13px}
+.log .w{overflow-wrap:anywhere}.log li.gap{color:var(--mute);font-size:14px;grid-template-columns:7.5em minmax(0,1fr)}
+.log li.gap .w{color:#b4532a}
+.log li.running .w::after{content:" (running)";color:var(--ok);font-size:13px}
+.log .ed{display:grid;grid-template-columns:1fr 1fr;gap:8px;grid-column:1/-1}
+.log .ed input[type=text]{grid-column:1/-1}
+input[type=time],input[type=date]{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-height:44px}
+.addrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.addrow input[type=text]{grid-column:1/-1}.addrow button{grid-column:1/-1}
+.sum{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:15px;margin:10px 0}.sum b{font-variant-numeric:tabular-nums}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .day{min-height:72px;border:1px solid var(--line);border-radius:6px;padding:4px 5px;text-align:left;font-size:12px;display:flex;flex-direction:column;gap:2px;align-items:stretch;justify-content:flex-start;background:var(--card)}
+.cal .day b{font-size:13px}.cal .day.other{opacity:.4}.cal .day.today{outline:2px solid var(--hi)}.cal .day.sel{border-color:var(--ink);border-width:2px}
+.cal .ev{background:var(--okBg);border-radius:3px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block;margin-left:4px;vertical-align:middle}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.mhead h2{margin:0}
+.evlist li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.evlist .tm{font-variant-numeric:tabular-nums;color:var(--mute);margin-right:8px}
+.horizon h2 small{display:block;font:400 14px system-ui,sans-serif;color:var(--mute);margin-top:4px}
+.goals li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.goals li.done span{text-decoration:line-through;color:var(--mute)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 12px}.bar i{display:block;height:100%;background:var(--ok)}
+@media(max-width:600px){.cal .day{min-height:52px;font-size:11px}.cal .ev{display:none}.cal .day.has b::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hi);margin-left:4px;vertical-align:middle}}
 @media(prefers-reduced-motion:no-preference){.item.on .stamp{animation:stamp .25s ease-out}@keyframes stamp{from{transform:scale(1.6) rotate(-4deg);opacity:0}}}
 </style>
 </head>
@@ -83,8 +113,24 @@ details{margin-top:16px}summary{cursor:pointer;color:var(--mute);font-size:15px;
     <div class="streak"><b id="streak">0</b><span>workdays in a row, fully signed</span></div>
   </div>
   <div class="banner" id="banner"></div>
-  <div class="grid">
+  <nav class="tabs" role="tablist"><button role="tab" data-tab="today" aria-selected="true">Today</button><button role="tab" data-tab="month" aria-selected="false">Month</button><button role="tab" data-tab="outlook" aria-selected="false">3 and 6 months</button></nav>
+  <div class="view" id="v-today"><div class="grid">
     <div>
+      <section class="panel">
+        <h2>Time log</h2>
+        <div class="now">
+          <div class="run" id="running">Nothing running<small>Start what you're doing now. Starting the next thing ends this one.</small></div>
+          <form id="startForm"><input type="text" id="startIn" placeholder="What are you doing now?" aria-label="What are you doing now"><button class="main">Start</button></form>
+          <button id="stopBtn" hidden>Stop the current entry</button>
+        </div>
+        <div class="sum" id="logSum"></div>
+        <ul class="log" id="log"></ul>
+        <details><summary>Add a past entry</summary>
+          <form class="addrow" id="addForm"><label class="f">From<input type="time" id="addFrom" required></label><label class="f">To<input type="time" id="addTo" required></label><input type="text" id="addWhat" placeholder="What you did" aria-label="What you did" required><button class="main">Add entry</button></form>
+        </details>
+        <div class="row"><button id="copyLog">Copy for timesheet</button></div>
+        <p class="foot" id="logMsg" aria-live="polite"></p>
+      </section>
       <section class="panel">
         <div class="cardhead">
           <div class="nav"><button id="prev" aria-label="Previous day">&#8249;</button><div class="date" id="date"></div><button id="next" aria-label="Next day">&#8250;</button></div>
@@ -129,12 +175,29 @@ details{margin-top:16px}summary{cursor:pointer;color:var(--mute);font-size:15px;
         <p class="foot">Want a second opinion? "Copy last 2 weeks" puts a plain-text summary on your clipboard. Paste it to whoever you choose, only when you choose.</p>
       </section>
     </div>
+  </div></div>
+  <div class="view" id="v-month" hidden>
+    <section class="panel">
+      <div class="mhead"><button id="mPrev" aria-label="Previous month">&#8249;</button><h2 id="mTitle"></h2><button id="mNext" aria-label="Next month">&#8250;</button></div>
+      <div class="cal" id="mDows"></div>
+      <div class="cal" id="mGrid" style="margin-top:4px"></div>
+      <p class="foot">Green dot: shift card fully signed that day.</p>
+    </section>
+    <section class="panel">
+      <h2 id="evTitle"></h2>
+      <ul class="evlist" id="evList"></ul>
+      <form class="addrow" id="evForm"><label class="f">Time (optional)<input type="time" id="evTime"></label><label class="f">Date<input type="date" id="evDate" required></label><input type="text" id="evText" placeholder="Appointment, deadline, interview, flight" aria-label="Event" required><button class="main">Add to schedule</button></form>
+    </section>
+  </div>
+  <div class="view" id="v-outlook" hidden>
+    <p class="sub" style="margin:0 0 16px">Where you want to be. Keep each list short, and check it on Fridays with the parking lot.</p>
+    <div class="grid" id="horizons"></div>
   </div>
 </div>
 <script>
 {
 const DEF=[{id:'time',label:'Logged my time'},{id:'board',label:'Updated the task board'},{id:'verify',label:'Everything I closed today was checked against the card or manual at the moment I signed it'},{id:'open',label:'Wrote a status note for every open multi-day job'},{id:'first',label:"Wrote down tomorrow's first task"},{id:'speak',label:"Raised anything that's bugging me, or nothing is"}];
-const $=s=>document.getElementById(s);
+const $=s=>document.getElementById(s);let extraReady=false;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const parse=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
@@ -145,8 +208,8 @@ const TODAY=key(new Date());const WK=weekKey(TODAY);
 let db=null,cur=TODAY,habits=DEF,parking=[],days=new Map(),week={items:[{t:'',done:false},{t:'',done:false},{t:'',done:false}]};
 const dirty=new Set(),timers={},queue={};
 const banner=t=>{const b=$('banner');b.textContent=t;b.style.display=t?'block':'none'};
-const LS='shiftcard.v1';let store={days:{},weeks:{},config:null};
-try{const raw=localStorage.getItem(LS);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')store={days:o.days||{},weeks:o.weeks||{},config:o.config||null}}}catch(e){}
+const LS='shiftcard.v1';let store={days:{},weeks:{},config:null,logs:{},events:{},outlook:{}};
+try{const raw=localStorage.getItem(LS);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')store={days:o.days||{},weeks:o.weeks||{},config:o.config||null,logs:o.logs||{},events:o.events||{},outlook:o.outlook||{}}}}catch(e){}
 const persist=()=>{try{localStorage.setItem(LS,JSON.stringify(store))}catch(e){banner("This browser isn't letting the page save. Use Download backup so you don't lose today's entry.")}};
 const write=(path,data)=>{const[col,id]=path.split('/');if(col==='days')store.days[id]=data;else if(col==='weeks')store.weeks[id]=data;else store.config=data;persist();dirty.delete(path)};
 const later=(path,fn,ms=700)=>{dirty.add(path);clearTimeout(timers[path]);timers[path]=setTimeout(()=>{delete timers[path];write(path,fn())},ms)};
@@ -170,6 +233,7 @@ function render(){
   let cells='';for(let k=first;k<=TODAY;k=addDays(k,1)){const x=days.get(k);let c='';if(x){const m=done(x);c=m===habits.length?'full':m>0?'part':(workday(k)&&k<TODAY&&k>=s0?'miss':'')}else if(workday(k)&&k<TODAY&&k>=s0)c='miss';if(!workday(k)&&!x)c+=' off';if(k===TODAY)c+=' today';if(k===cur)c+=' sel';cells+=`<button class="cell ${c}" data-k="${k}" aria-label="${k}">${parse(k).getDate()}</button>`}
   $('strip').innerHTML=cells;
   $('top3').innerHTML=week.items.map((it,i)=>`<li class="${it.done?'done':''}"><input type="checkbox" class="chk" data-w="${i}"${it.done?' checked':''} aria-label="Done"><input type="text" data-wt="${i}" placeholder="Priority ${i+1}" value="${esc(it.t)}"></li>`).join('');
+  if(extraReady)extra();
   $('park').innerHTML=parking.length?parking.map((p,i)=>`<li><span>${esc(p)}</span><button data-p="${i}" aria-label="Remove">Remove</button></li>`).join(''):'<li class="empty">Nothing parked.</li>';
 }
 $('list').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(!b)return;const h=b.dataset.h;const d=dayData();d.checks[h]=nextState(d.checks[h]);d.done=habits.filter(x=>d.checks[x.id]).length;days.set(cur,d);render();clearTimeout(timers['days/'+cur]);dirty.add('days/'+cur);write('days/'+cur,d)});
@@ -183,15 +247,104 @@ $('parkForm').addEventListener('submit',e=>{e.preventDefault();const v=$('parkIn
 $('park').addEventListener('click',e=>{const i=e.target.dataset.p;if(i==null)return;parking=parking.filter((_,j)=>j!=i);render();saveCfg()});
 $('saveHabits').onclick=()=>{const lines=$('habitsTxt').value.split('\n').map(s=>s.trim()).filter(Boolean);if(!lines.length)return;const used=new Set();habits=lines.map(l=>{const old=habits.find(h=>h.label===l);let id=old?old.id:l.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40)||'item';while(used.has(id))id+='-x';used.add(id);return{id,label:l}});render();saveCfg()};
 render();
+
+/* ---------- Tabs ---------- */
+const showTab=t=>{document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));['today','month','outlook'].forEach(v=>{$('v-'+v).hidden=v!==t});try{localStorage.setItem('shiftcard.tab',t)}catch(e){}extra()};
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab)});
+
+/* ---------- Time log ---------- */
+const hm=d=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const mins=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
+const fmtDur=m=>m<60?`${m} min`:`${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}m`;
+const fmt12=t=>{const m=mins(t);if(m==null)return'';let h=Math.floor(m/60),mm=m%60;const ap=h>=12?'pm':'am';h=h%12||12;return `${h}:${String(mm).padStart(2,'0')}${ap}`};
+const logOf=k=>Array.isArray(store.logs[k])?store.logs[k]:[];
+const saveLog=(k,arr)=>{arr.sort((a,b)=>mins(a.start)-mins(b.start));store.logs[k]=arr;persist()};
+let editing=-1;
+const nowT=()=>hm(new Date());
+function renderLog(){
+  const k=cur,arr=logOf(k),isToday=k===TODAY;
+  const run=isToday?arr.find(e=>!e.end):null;
+  $('startForm').hidden=!isToday;
+  $('stopBtn').hidden=!run;
+  if(run){const el=Math.max(0,mins(nowT())-mins(run.start));$('running').innerHTML=`${esc(run.what)}<small>Since ${fmt12(run.start)}, ${fmtDur(el)} so far</small>`}
+  else $('running').innerHTML=isToday?'Nothing running<small>Start what you\'re doing now. Starting the next thing ends this one.</small>':'Past day<small>Add or fix entries below.</small>';
+  let total=0,gaps=0,rows='';
+  arr.forEach((e,i)=>{
+    const end=e.end||(isToday?nowT():e.start);const d=Math.max(0,mins(end)-mins(e.start));total+=d;
+    if(i>0){const pe=arr[i-1].end;if(pe&&mins(e.start)>mins(pe)){const g=mins(e.start)-mins(pe);gaps+=g;rows+=`<li class="gap"><span class="t">${fmt12(pe)}</span><span class="w">${fmtDur(g)} not logged</span></li>`}}
+    if(i===editing){rows+=`<li><div class="ed"><label class="f">From<input type="time" data-ef="start" value="${esc(e.start)}"></label><label class="f">To<input type="time" data-ef="end" value="${esc(e.end||'')}"></label><input type="text" data-ef="what" value="${esc(e.what)}" aria-label="What"><button class="main" data-save="${i}">Save</button><button data-del="${i}">Delete</button></div></li>`}
+    else rows+=`<li class="${e.end?'':'running'}"><span class="t">${fmt12(e.start)}<small>${fmtDur(d)}</small></span><span class="w">${esc(e.what)}</span><button data-edit="${i}" aria-label="Edit entry">Edit</button></li>`;
+  });
+  $('log').innerHTML=rows||'<li class="empty" style="display:block">No entries yet.</li>';
+  const span=arr.length?Math.max(0,mins(arr[arr.length-1].end||(isToday?nowT():arr[arr.length-1].start))-mins(arr[0].start)):0;
+  $('logSum').innerHTML=arr.length?`<span>Logged <b>${fmtDur(total)}</b></span><span>Gaps <b>${fmtDur(gaps)}</b></span><span>First to last <b>${fmtDur(span)}</b></span>`:'';
+}
+$('startForm').addEventListener('submit',e=>{e.preventDefault();const v=$('startIn').value.trim();if(!v)return;const arr=[...logOf(TODAY)];const t=nowT();arr.forEach(x=>{if(!x.end)x.end=t});arr.push({start:t,end:null,what:v});saveLog(TODAY,arr);$('startIn').value='';renderLog()});
+$('stopBtn').onclick=()=>{const arr=[...logOf(TODAY)];arr.forEach(x=>{if(!x.end)x.end=nowT()});saveLog(TODAY,arr);renderLog()};
+$('addForm').addEventListener('submit',e=>{e.preventDefault();const f=$('addFrom').value,t=$('addTo').value,w=$('addWhat').value.trim();if(!f||!t||!w)return;if(mins(t)<=mins(f)){$('logMsg').textContent='The end time has to be after the start time.';return}const arr=[...logOf(cur),{start:f,end:t,what:w}];saveLog(cur,arr);$('addFrom').value=t;$('addTo').value='';$('addWhat').value='';$('logMsg').textContent='';renderLog()});
+$('log').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const arr=[...logOf(cur)];
+  if(b.dataset.edit!=null){editing=+b.dataset.edit;renderLog();return}
+  if(b.dataset.del!=null){arr.splice(+b.dataset.del,1);editing=-1;saveLog(cur,arr);renderLog();return}
+  if(b.dataset.save!=null){const li=b.closest('li');const g=n=>li.querySelector(`[data-ef="${n}"]`).value;const s0=g('start'),e0=g('end'),w=g('what').trim();if(!s0||!w)return;if(e0&&mins(e0)<=mins(s0)){$('logMsg').textContent='The end time has to be after the start time.';return}arr[+b.dataset.save]={start:s0,end:e0||null,what:w};editing=-1;$('logMsg').textContent='';saveLog(cur,arr);renderLog()}});
+$('copyLog').onclick=async()=>{const arr=logOf(cur);const lines=[cur].concat(arr.map(e=>`${fmt12(e.start)} to ${e.end?fmt12(e.end):'now'}  ${fmtDur(Math.max(0,mins(e.end||nowT())-mins(e.start)))}  ${e.what}`));const text=lines.join('\n');try{await navigator.clipboard.writeText(text);$('logMsg').textContent='Copied.'}catch(err){const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');$('logMsg').textContent='Copied.'}catch(_){$('logMsg').textContent="Couldn't copy in this browser."}t.remove()}};
+setInterval(()=>{if(!$('v-today').hidden&&cur===TODAY&&editing<0)renderLog()},30000);
+
+/* ---------- Month schedule ---------- */
+let mView=TODAY.slice(0,7),mSel=TODAY;
+const evOf=k=>Array.isArray(store.events[k])?store.events[k]:[];
+function renderMonth(){
+  const [y,m]=mView.split('-').map(Number);const first=new Date(y,m-1,1);
+  $('mTitle').textContent=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  $('mDows').innerHTML=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="dow">${x}</div>`).join('');
+  const off=(first.getDay()+6)%7;let k=addDays(key(first),-off);let html='';
+  for(let i=0;i<42;i++,k=addDays(k,1)){const ev=evOf(k);const d=days.get(k);const full=d&&done(d)===habits.length;
+    if(i>=35&&k.slice(0,7)!==mView)break;
+    html+=`<button class="day${k.slice(0,7)!==mView?' other':''}${k===TODAY?' today':''}${k===mSel?' sel':''}${ev.length?' has':''}" data-day="${k}"><b>${parse(k).getDate()}${full?'<span class="dot"></span>':''}</b>${ev.slice(0,2).map(e=>`<span class="ev">${esc(e.text)}</span>`).join('')}${ev.length>2?`<span class="ev">+${ev.length-2} more</span>`:''}</button>`}
+  $('mGrid').innerHTML=html;
+  $('evTitle').textContent=parse(mSel).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  const ev=evOf(mSel);
+  $('evList').innerHTML=ev.length?ev.map((e,i)=>`<li><span><span class="tm">${e.time?fmt12(e.time):'All day'}</span>${esc(e.text)}</span><button data-evdel="${i}">Remove</button></li>`).join(''):'<li class="empty">Nothing scheduled.</li>';
+  if(document.activeElement!==$('evDate'))$('evDate').value=mSel;
+}
+$('mPrev').onclick=()=>{const[y,m]=mView.split('-').map(Number);const d=new Date(y,m-2,1);mView=key(d).slice(0,7);renderMonth()};
+$('mNext').onclick=()=>{const[y,m]=mView.split('-').map(Number);const d=new Date(y,m,1);mView=key(d).slice(0,7);renderMonth()};
+$('mGrid').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;mSel=b.dataset.day;mView=mSel.slice(0,7);renderMonth()});
+$('evForm').addEventListener('submit',e=>{e.preventDefault();const d=$('evDate').value,t=$('evTime').value,x=$('evText').value.trim();if(!d||!x)return;const arr=[...evOf(d),{time:t||'',text:x}];arr.sort((a,b)=>(mins(a.time)??-1)-(mins(b.time)??-1));store.events[d]=arr;persist();mSel=d;mView=d.slice(0,7);$('evText').value='';$('evTime').value='';renderMonth()});
+$('evList').addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.evdel;if(i==null)return;const arr=[...evOf(mSel)];arr.splice(+i,1);if(arr.length)store.events[mSel]=arr;else delete store.events[mSel];persist();renderMonth()});
+
+/* ---------- 3 and 6 month outlook ---------- */
+const H=[{id:'m3',n:3,title:'3 months out'},{id:'m6',n:6,title:'6 months out'}];
+const hz=id=>{const o=store.outlook[id];return o&&typeof o==='object'?o:{};};
+const plusMonths=(k,n)=>{const d=parse(k);d.setMonth(d.getMonth()+n);return key(d)};
+function renderOutlook(){
+  $('horizons').innerHTML=H.map(h=>{const o=hz(h.id);const by=o.by||plusMonths(TODAY,h.n);const items=Array.isArray(o.items)?o.items:[];const dn=items.filter(x=>x.done).length;const pct=items.length?Math.round(dn/items.length*100):0;
+    return `<section class="panel horizon"><h2>${h.title}<small>By ${esc(parse(by).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}))}</small></h2>
+    <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div><p class="count" style="margin:0 0 6px"><b>${dn}</b> of ${items.length} done</p>
+    <ul class="goals">${items.length?items.map((x,i)=>`<li class="${x.done?'done':''}"><input type="checkbox" class="chk" data-g="${h.id}" data-i="${i}"${x.done?' checked':''} aria-label="Done"><span>${esc(x.t)}</span><button data-gdel="${h.id}" data-i="${i}">Remove</button></li>`).join(''):'<li class="empty" style="display:block">No goals yet.</li>'}</ul>
+    <form class="row" data-gform="${h.id}"><input type="text" placeholder="A goal for ${h.n} months out" aria-label="New goal"><button class="main">Add</button></form>
+    <label class="f" style="margin-top:14px">Target date<input type="date" data-gby="${h.id}" value="${esc(by)}"></label>
+    <label class="f" style="margin-top:14px">Notes<textarea data-gnote="${h.id}">${esc(o.note||'')}</textarea></label></section>`}).join('');
+}
+const setHz=(id,o)=>{store.outlook[id]=o;persist()};
+$('horizons').addEventListener('submit',e=>{e.preventDefault();const id=e.target.dataset.gform;if(!id)return;const inp=e.target.querySelector('input');const v=inp.value.trim();if(!v)return;const o={...hz(id)};o.items=[...(o.items||[]),{t:v,done:false}];setHz(id,o);renderOutlook();const f=document.querySelector(`[data-gform="${id}"] input`);if(f)f.focus()});
+$('horizons').addEventListener('change',e=>{const t=e.target;if(t.dataset.g){const o={...hz(t.dataset.g)};o.items=(o.items||[]).map((x,i)=>i==t.dataset.i?{...x,done:t.checked}:x);setHz(t.dataset.g,o);renderOutlook()}else if(t.dataset.gby){const o={...hz(t.dataset.gby),by:t.value};setHz(t.dataset.gby,o);renderOutlook()}});
+$('horizons').addEventListener('click',e=>{const b=e.target.closest('[data-gdel]');if(!b)return;const o={...hz(b.dataset.gdel)};o.items=(o.items||[]).filter((_,i)=>i!=b.dataset.i);setHz(b.dataset.gdel,o);renderOutlook()});
+let noteT;$('horizons').addEventListener('input',e=>{const id=e.target.dataset.gnote;if(!id)return;clearTimeout(noteT);const v=e.target.value;noteT=setTimeout(()=>{setHz(id,{...hz(id),note:v})},500)});
+
+function extra(){if(!$('v-today').hidden)renderLog();if(!$('v-month').hidden)renderMonth();if(!$('v-outlook').hidden&&!$('horizons').contains(document.activeElement))renderOutlook()}
+
+extraReady=true;
 const load=()=>{days=new Map(Object.entries(store.days||{}).filter(([k,v])=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==='object'));
   const c=store.config;if(c&&Array.isArray(c.habits)&&c.habits.length)habits=c.habits.map(h=>({id:String(h.id),label:String(h.label)}));parking=c&&Array.isArray(c.parking)?c.parking.map(String):[];
   const w=store.weeks[WK];if(w&&Array.isArray(w.items))week.items=[0,1,2].map(i=>({t:String((w.items[i]||{}).t||''),done:!!(w.items[i]||{}).done}));render()};
 load();
+try{const t=localStorage.getItem('shiftcard.tab');if(t&&['today','month','outlook'].includes(t))showTab(t)}catch(e){}
+extra();
 const msg=t=>{$('dataMsg').textContent=t};
 $('dl').onclick=()=>{try{const b=new Blob([JSON.stringify(store,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='shift-card-backup-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove();msg('Backup downloaded.')}catch(e){msg("Couldn't create the backup file in this browser.")}};
 $('restoreBtn').onclick=()=>$('restore').click();
-$('restore').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!o||typeof o.days!=='object')throw 0;store={days:o.days||{},weeks:o.weeks||{},config:o.config||null};persist();load();msg('Backup restored.')}catch(err){msg("That file isn't a shift card backup.")}e.target.value=''};
-$('copy').onclick=async()=>{const lines=['Shift card, last 14 days (workdays Mon to Thu)','Streak: '+streak()];for(let i=13;i>=0;i--){const k=addDays(TODAY,-i);const d=days.get(k);if(!d&&!workday(k))continue;if(!d){lines.push(k+': nothing logged');continue}const miss=habits.filter(h=>!(d.checks&&d.checks[h.id])).map(h=>h.label);let l=k+': '+done(d)+'/'+habits.length+(miss.length?' (missed: '+miss.join('; ')+')':'');if(d.openwork)l+=' | open: '+d.openwork.replace(/\n/g,'; ');if(d.bugging)l+=' | bugging: '+d.bugging;if(d.win)l+=' | win: '+d.win;lines.push(l)}
+$('restore').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!o||typeof o.days!=='object')throw 0;store={days:o.days||{},weeks:o.weeks||{},config:o.config||null,logs:o.logs||{},events:o.events||{},outlook:o.outlook||{}};persist();load();extra();msg('Backup restored.')}catch(err){msg("That file isn't a shift card backup.")}e.target.value=''};
+$('copy').onclick=async()=>{const lines=['Shift card, last 14 days (workdays Mon to Thu)','Streak: '+streak()];for(let i=13;i>=0;i--){const k=addDays(TODAY,-i);const d=days.get(k);if(!d&&!workday(k))continue;if(!d){lines.push(k+': nothing logged');continue}const miss=habits.filter(h=>!(d.checks&&d.checks[h.id])).map(h=>h.label);let l=k+': '+done(d)+'/'+habits.length+(miss.length?' (missed: '+miss.join('; ')+')':'');if(d.openwork)l+=' | open: '+d.openwork.replace(/\n/g,'; ');if(d.bugging)l+=' | bugging: '+d.bugging;if(d.win)l+=' | win: '+d.win;const lg=logOf(k);if(lg.length)l+=' | time logged: '+fmtDur(lg.reduce((a,e)=>a+Math.max(0,mins(e.end||e.start)-mins(e.start)),0));lines.push(l)}
   const wk=week.items.filter(x=>x.t).map(x=>(x.done?'[done] ':'[open] ')+x.t);if(wk.length)lines.push('This week: '+wk.join('; '));
   const text=lines.join('\n');try{await navigator.clipboard.writeText(text);msg('Copied. Paste it wherever you like.')}catch(e){const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');msg('Copied.')}catch(_){msg("Couldn't copy in this browser.")}t.remove()}};
 }
