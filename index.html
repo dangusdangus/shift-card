@@ -57,7 +57,9 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--mute);font-size:15px;
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{min-height:38px;font-size:14px;padding:0 12px;border-radius:19px}
 .chips button.sched{border-color:var(--ok)}
 /* lists */
-.sched li,.log li,.plain li{display:grid;grid-template-columns:7.2em minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.sched li,.plain li{display:grid;grid-template-columns:7.2em minmax(0,1fr);gap:4px 10px;align-items:start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.sched li .acts,.plain li .acts{grid-column:2;justify-content:flex-start}
+.log li{display:grid;grid-template-columns:7.2em minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
 .t{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:15px}.t small{display:block;color:var(--mute);font-size:13px}
 .w{overflow-wrap:anywhere}.w .loc{display:block;color:var(--mute);font-size:13px}.join{display:inline-flex;align-items:center;min-height:36px;margin-top:4px;padding:0 12px;border-radius:8px;border:1px solid var(--ok);color:var(--ok);font-weight:600;font-size:14px;text-decoration:none}
 .log li.gap{color:var(--mute);font-size:14px;grid-template-columns:7.2em minmax(0,1fr)}.log li.gap .w{color:var(--warn)}
@@ -101,6 +103,7 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--mute);font-size:15px;
 .msg{color:var(--ok);font-size:14px;min-height:1.2em;margin:6px 0 0}.msg.bad{color:var(--warn)}
 .alert{background:var(--hi);color:var(--hiInk);border-radius:10px;padding:12px 16px;margin-bottom:12px;font-weight:600;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 .alert a{color:var(--hiInk);font-weight:700}
+.alert .mini{background:#fff;color:#1b2530;border-color:#1b2530}
 .mini{min-height:36px;font-size:14px;padding:0 10px}
 .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 @media(prefers-reduced-motion:no-preference){.item.on .stamp{animation:stamp .25s ease-out}@keyframes stamp{from{transform:scale(1.6) rotate(-4deg);opacity:0}}}
@@ -227,6 +230,7 @@ task 2026-12-03: Submit expense report  (task with a due date)</pre>
           <p class="foot">Calendar files download to your phone. Tap the download and open it with your calendar app. The calendar sends the alerts, even when this app is closed.</p>
           <div class="row"><button id="dl">Download backup</button><button id="restoreBtn">Restore backup</button><input type="file" id="restore" accept=".json,application/json" hidden></div>
           <p class="msg" id="dataMsg" aria-live="polite"></p>
+          <details><summary>Workday times (meeting, breaks, lunch)</summary><p class="foot">Defaults for the prompts. Each day you can still start late or run long.</p><div id="defsBox"></div><div class="row"><button class="main" id="saveDefs">Save times</button></div></details>
           <details><summary>Edit the shutdown checklist</summary>
             <label class="f" style="margin-top:8px">One item per line<textarea id="habitsTxt" style="min-height:150px"></textarea></label>
             <div class="row"><button class="main" id="saveHabits">Save checklist</button></div>
@@ -262,13 +266,14 @@ const copyText=async(text,id)=>{try{await navigator.clipboard.writeText(text);sa
 const LS='shiftcard.v1';
 const DEF=[{id:'time',label:'Logged my time'},{id:'board',label:'Updated the task board'},{id:'verify',label:'Everything I closed today was checked against the card or manual at the moment I signed it'},{id:'open',label:'Wrote a status note for every open multi-day job'},{id:'first',label:"Wrote down tomorrow's first task"},{id:'speak',label:"Raised anything that's bugging me, or nothing is"}];
 const blank=()=>({days:{},weeks:{},config:null,logs:{},events:{},outlook:{},tasks:[]});
-const norm=o=>({days:o.days||{},weeks:o.weeks||{},config:o.config||null,logs:o.logs||{},events:o.events||{},outlook:o.outlook||{},tasks:Array.isArray(o.tasks)?o.tasks:[]});
+const norm=o=>({days:o.days||{},weeks:o.weeks||{},config:o.config||null,logs:o.logs||{},events:o.events||{},outlook:o.outlook||{},tasks:Array.isArray(o.tasks)?o.tasks:[],prompts:o.prompts||{}});
 let store=blank();
 try{const raw=localStorage.getItem(LS);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')store=norm(o)}}catch(e){}
+for(const k of Object.keys(store.events)){if(!Array.isArray(store.events[k]))continue;store.events[k]=store.events[k].map(e=>{let t=String(e.text||''),loc=e.loc||'',link=e.link||'';const u=t.match(/https:\/\/[^\s<>"']+/i);if(u&&!link){link=u[0];t=t.replace(u[0],'').trim()}const i=t.lastIndexOf(' @ ');if(i>0&&!loc){loc=t.slice(i+3).trim();t=t.slice(0,i).trim()}return {...e,text:t,loc,link}})}
 const persist=()=>{try{localStorage.setItem(LS,JSON.stringify(store))}catch(e){say('dataMsg',"This browser isn't letting the app save. Download a backup now.",1)}};
 const habits=()=>{const c=store.config;return c&&Array.isArray(c.habits)&&c.habits.length?c.habits:DEF};
 const parking=()=>{const c=store.config;return c&&Array.isArray(c.parking)?c.parking:[]};
-const setCfg=(h,p)=>{store.config={habits:h,parking:p};persist()};
+const setCfg=(h,p)=>{store.config={...(store.config||{}),habits:h,parking:p};persist()};
 const dayOf=k=>{const d=store.days[k];return d&&typeof d==='object'?d:{date:k,checks:{}}};
 const setDay=(k,patch)=>{const d={...dayOf(k),...patch,date:k};d.checks={...(d.checks||{})};d.total=habits().length;d.done=nDone(d);d.workday=workday(k);store.days[k]=d;persist()};
 const nDone=d=>habits().filter(h=>d.checks&&d.checks[h.id]).length;
@@ -362,7 +367,7 @@ $('runWhat').addEventListener('blur',e=>{clearTimeout(whatT);setRunWhat(e.target
 $('chips').addEventListener('click',e=>{const b=e.target.closest('[data-chip]');if(!b)return;const a=logOf(TODAY),run=a.find(x=>!x.end);if(run&&!run.what){setRunWhat(b.dataset.chip);render()}else punch(b.dataset.chip)});
 function renderSched(){
   const ev=evOf(cur);$('schedPanel').hidden=!ev.length;
-  $('sched').innerHTML=ev.map((e,i)=>`<li><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span><button class="mini" data-sics="${i}">Add to calendar</button></li>`).join('');
+  $('sched').innerHTML=ev.map((e,i)=>`<li><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span><span class="acts"><button class="mini" data-sics="${i}">Add to calendar</button></span></li>`).join('');
 }
 
 /* ---------- today: time log ---------- */
@@ -397,6 +402,8 @@ $('list').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(!
 $('prev').onclick=()=>{cur=addDays(cur,-1);editing=-1;render()};$('next').onclick=()=>{if(cur<TODAY){cur=addDays(cur,1);editing=-1;render()}};
 
 /* ---------- plan: month ---------- */
+let evEditing=-1;
+const evEditor=e=>`<div class="ed" style="grid-column:1/-1"><label class="f" style="grid-column:1/-1">Date<input type="date" data-ee="date" value="${esc(mSel)}"></label><label class="f">Start<input type="time" data-ee="time" value="${esc(e.time||'')}"></label><label class="f">End<input type="time" data-ee="end" value="${esc(e.end||'')}"></label><input type="text" data-ee="text" value="${esc(e.text)}" aria-label="What"><input type="text" data-ee="loc" value="${esc(e.loc||'')}" placeholder="Location" aria-label="Location"><input type="text" data-ee="link" value="${esc(e.link||'')}" placeholder="Meeting link" aria-label="Meeting link"><button class="main" data-eesave="1">Save</button><button data-eecancel="1">Cancel</button></div>`;
 function renderPlan(){
   const[y,m]=mView.split('-').map(Number),first=new Date(y,m-1,1);
   $('mTitle').textContent=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
@@ -406,16 +413,23 @@ function renderPlan(){
     html+=`<button class="day${k.slice(0,7)!==mView?' other':''}${k===TODAY?' today':''}${k===mSel?' sel':''}${ev.length?' has':''}" data-day="${k}"><b>${parse(k).getDate()}${full?'<span class="dot"></span>':''}</b>${ev.slice(0,2).map(e=>`<span class="ev">${esc(e.text)}</span>`).join('')}${ev.length>2?`<span class="ev">+${ev.length-2} more</span>`:''}</button>`}
   $('mGrid').innerHTML=html;
   $('evTitle').textContent=longDate(mSel);
-  const ev=evOf(mSel),due=tasks().filter(x=>x.due===mSel);$('evList').innerHTML=(ev.length||due.length)?ev.map((e,i)=>`<li><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span><span class="acts"><button class="mini" data-evics="${i}">Add to calendar</button><button class="mini" data-evdel="${i}">Remove</button></span></li>`).join('')+due.map(x=>`<li><span class="t">Task due</span><span class="w"${x.done?' style="text-decoration:line-through;color:var(--mute)"':''}>${esc(x.t)}</span>${x.done?'<span></span>':`<button class="mini" data-tkics="${esc(x.id)}">Remind me</button>`}</li>`).join(''):'<li class="empty">Nothing scheduled.</li>';
+  const ev=evOf(mSel),due=tasks().filter(x=>x.due===mSel);$('evList').innerHTML=(ev.length||due.length)?ev.map((e,i)=>`<li><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span>${i===evEditing?evEditor(e):''}<span class="acts"${i===evEditing?' hidden':''}><button class="mini" data-evedit="${i}">Edit</button><button class="mini" data-evics="${i}">Add to calendar</button><button class="mini" data-evdel="${i}">Remove</button></span></li>`).join('')+due.map(x=>`<li><span class="t">Task due</span><span class="w"${x.done?' style="text-decoration:line-through;color:var(--mute)"':''}>${esc(x.t)}</span>${x.done?'<span></span>':`<button class="mini" data-tkics="${esc(x.id)}">Remind me</button>`}</li>`).join(''):'<li class="empty">Nothing scheduled.</li>';
   $('openDayRow').hidden=mSel>TODAY;
   if(document.activeElement!==$('evDate'))$('evDate').value=mSel;
 }
 $('mPrev').onclick=()=>{const[y,m]=mView.split('-').map(Number);mView=key(new Date(y,m-2,1)).slice(0,7);renderPlan()};
 $('mNext').onclick=()=>{const[y,m]=mView.split('-').map(Number);mView=key(new Date(y,m,1)).slice(0,7);renderPlan()};
-$('mGrid').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;mSel=b.dataset.day;mView=mSel.slice(0,7);renderPlan()});
+$('mGrid').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;evEditing=-1;mSel=b.dataset.day;mView=mSel.slice(0,7);renderPlan()});
 $('openDay').onclick=()=>{cur=mSel;showTab('today')};
 $('evForm').addEventListener('submit',e=>{e.preventDefault();const d=$('evDate').value,t=$('evTime').value,en=$('evEnd').value,x=$('evText').value.trim();if(!d||!x)return;if(t&&en&&mins(en)<=mins(t)){say('evMsg','The end time has to be after the start time.',1);return}const lk=$('evLink').value.trim();if(lk&&!URLRE.test(lk)){say('evMsg','The link has to start with https://',1);return}addEvent(d,t,en,x,$('evLoc').value.trim(),lk);persist();mSel=d;mView=d.slice(0,7);$('evText').value='';$('evLoc').value='';$('evLink').value='';$('evTime').value='';$('evEnd').value='';say('evMsg','');renderPlan()});
-$('evList').addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.evdel;if(i==null)return;const a=[...evOf(mSel)];a.splice(+i,1);if(a.length)store.events[mSel]=a;else delete store.events[mSel];persist();renderPlan()});
+$('evList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.evedit!=null){evEditing=+b.dataset.evedit;renderPlan();return}
+  if(b.dataset.eecancel){evEditing=-1;say('evMsg','');renderPlan();return}
+  if(b.dataset.eesave){const li=b.closest('li'),g=n=>li.querySelector(`[data-ee="${n}"]`).value.trim();const d=g('date'),t=g('time'),en=g('end'),x=g('text'),lk=g('link');
+    if(!d||!x){say('evMsg','It needs a date and a name.',1);return}if(t&&en&&mins(en)<=mins(t)){say('evMsg','The end time has to be after the start time.',1);return}if(lk&&!/^https:\/\//i.test(lk)){say('evMsg','The link has to start with https://',1);return}
+    const a=[...evOf(mSel)];a.splice(evEditing,1);if(a.length)store.events[mSel]=a;else delete store.events[mSel];addEvent(d,t,en,x,g('loc')||' ',lk);const moved=store.events[d];moved.forEach(z=>{if(z.loc===' ')z.loc=''});persist();evEditing=-1;mSel=d;mView=d.slice(0,7);say('evMsg','Saved.');renderPlan();return}
+});
+$('evList').addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.evdel;if(i==null)return;evEditing=-1;const a=[...evOf(mSel)];a.splice(+i,1);if(a.length)store.events[mSel]=a;else delete store.events[mSel];persist();renderPlan()});
 
 /* ---------- review ---------- */
 function streak(){const hs=habits().length;let k=TODAY,n=0;const t=store.days[k];if(!(t&&nDone(t)===hs))k=addDays(k,-1);for(let i=0;i<400;i++,k=addDays(k,-1)){const d=store.days[k];if(d&&nDone(d)===hs){n++;continue}if(!d&&!workday(k))continue;break}return n}
@@ -480,14 +494,61 @@ $('icsShut').onclick=()=>{let k=TODAY;if(!(workday(k)&&mins(nowT())<980))k=addDa
   done1('dataMsg',icsFile([{raw}],'shutdown-reminder.ics'))};
 
 /* ---------- in-app alert while the app is open ---------- */
+const staleRun=()=>{for(let i=7;i>=1;i--){const k=addDays(TODAY,-i);if(logOf(k).some(x=>!x.end))return{k}}if(logOf(TODAY).some(x=>!x.end)&&mins(nowT())>=990&&!overtime)return{k:TODAY};return null};
+$('alert').addEventListener('click',e=>{const b=e.target.closest('[data-stop]');if(!b)return;const st=staleRun();if(!st)return;const a=[...logOf(st.k)],r=a.find(x=>!x.end);if(!r)return;
+  let t=b.dataset.stop==='now'?nowT():b.dataset.stop==='1630'?'16:30':$('stopAt').value;
+  if(!t){$('stopAt').focus();return}if(mins(t)<=mins(r.start)){t=b.dataset.stop==='1630'?r.start:null;if(!t){$('stopAt').style.outline='3px solid var(--warn)';return}}
+  r.end=t;setLog(st.k,a);if(document.activeElement)document.activeElement.blur();render()});
+/* ---------- workday defaults: morning meeting, breaks, lunch ---------- */
+const DEFDAY=[{id:'meet',name:'Morning meeting',start:'06:00',end:'06:20'},{id:'b1',name:'Morning break',start:'09:00',end:'09:15'},{id:'lunch',name:'Lunch',start:'11:00',end:'11:30'},{id:'b2',name:'Afternoon break',start:'14:00',end:'14:15'}];
+const dayDefs=()=>{const c=store.config;const d=c&&Array.isArray(c.defaults)?c.defaults:[];return DEFDAY.map(x=>{const o=d.find(y=>y.id===x.id);return o?{...x,start:o.start||x.start,end:o.end||x.end}:x})};
+const pr=()=>{const p=store.prompts&&store.prompts[TODAY];return p&&typeof p==='object'?p:{}};
+const setPr=(k,v)=>{store.prompts={[TODAY]:{...pr(),[k]:v}};persist()};
+const breakDefs=()=>dayDefs().filter(d=>d.id!=='meet');
+function dayPrompt(m){
+  if(!(workday(TODAY)||overtime)||pr().off)return'';
+  const a=logOf(TODAY),run=a.find(x=>!x.end),has=n=>a.some(x=>x.what===n),D=dayDefs(),meet=D[0];
+  if(!a.length&&m>=mins(meet.start)&&m<990&&!pr().meet){
+    const early=m<mins(meet.end);
+    return `<span>The work timer isn't running.</span><span class="acts">${early?`<button class="mini" data-act="meet-run">Start ${esc(meet.name.toLowerCase())} (from ${t12(meet.start)})</button>`:`<button class="mini" data-act="meet-log">Log ${esc(meet.name.toLowerCase())} ${t12(meet.start)} to ${t12(meet.end)}, then start a task</button>`}<input type="time" id="actAt" aria-label="Started at" style="width:auto;min-height:36px;padding:4px 8px"><button class="mini" data-act="start-at">Started at this time</button><button class="mini" data-act="off">Not working today</button></span>`}
+  if(run){const d=breakDefs().find(x=>x.name===run.what);const snooze=pr()['snz-'+(d&&d.id)]||0;
+    if(d&&m>=mins(d.end)&&m>=snooze){const prev=[...a].reverse().find(x=>x.end&&x.what&&!breakDefs().some(y=>y.name===x.what)&&x.what!==meet.name);
+      return `<span>${esc(d.name)} was set to end at ${t12(d.end)}.</span><span class="acts">${prev?`<button class="mini" data-act="resume" data-w="${esc(prev.what)}">Back to ${esc(prev.what)}</button>`:''}<button class="mini" data-act="newtask">New task</button><button class="mini" data-act="snooze" data-id="${d.id}">Still on ${esc(d.name.toLowerCase())}</button></span>`}}
+  for(const d of breakDefs()){
+    if(m>=mins(d.start)&&m<mins(d.end)+30&&!has(d.name)&&!pr()[d.id]&&a.length){
+      const late=m>mins(d.start);
+      return `<span>${esc(d.name)}, ${t12(d.start)} to ${t12(d.end)}.</span><span class="acts"><button class="mini" data-act="brk-now" data-id="${d.id}">Start now</button>${late?(m>=mins(d.end)?`<button class="mini" data-act="brk-log" data-id="${d.id}">Log ${t12(d.start)} to ${t12(d.end)}</button>`:`<button class="mini" data-act="brk-back" data-id="${d.id}">Started at ${t12(d.start)}</button>`):''}<button class="mini" data-act="skip" data-id="${d.id}">Skip</button></span>`}}
+  return'';
+}
+$('alert').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act,m=mins(nowT()),D=dayDefs(),meet=D[0],d=D.find(x=>x.id===b.dataset.id);let a=[...logOf(TODAY)];const run=a.find(x=>!x.end);let focusWhat=false;
+  if(act==='meet-run'){a=[{start:meet.start,end:null,what:meet.name}]}
+  else if(act==='meet-log'){a=[{start:meet.start,end:meet.end,what:meet.name},{start:meet.end,end:null,what:''}];focusWhat=true}
+  else if(act==='start-at'){const t=$('actAt').value;if(!t||mins(t)>m){$('actAt').focus();$('actAt').style.outline='3px solid var(--warn)';return}a=[{start:t,end:null,what:''}];focusWhat=true}
+  else if(act==='off'){setPr('off',true);render();return}
+  else if(act==='skip'){setPr(d.id,'skip');render();return}
+  else if(act==='snooze'){setPr('snz-'+d.id,m+10);render();return}
+  else if(act==='resume'){punch(b.dataset.w);return}
+  else if(act==='newtask'){punch('');return}
+  else if(act==='brk-now'){punch(d.name);return}
+  else if(act==='brk-back'||act==='brk-log'){const cut=d.start;if(run&&mins(run.start)<mins(cut)){run.end=cut}else if(run){a=a.filter(x=>x!==run)}
+    a.push({start:cut,end:act==='brk-log'?d.end:null,what:d.name});if(act==='brk-log'&&run)a.push({start:d.end,end:null,what:run.what})}
+  setLog(TODAY,a);editing=-1;if(document.activeElement)document.activeElement.blur();render();if(focusWhat){$('runWhat').value='';$('runWhat').focus()}});
+$('saveDefs').onclick=()=>{const rows=[...document.querySelectorAll('[data-def]')];const out=DEFDAY.map(x=>{const s0=document.querySelector(`[data-def="${x.id}"][data-k="start"]`).value,e0=document.querySelector(`[data-def="${x.id}"][data-k="end"]`).value;return{id:x.id,start:s0||x.start,end:e0||x.end}});
+  if(out.some(x=>mins(x.end)<=mins(x.start))){say('dataMsg','Each end time has to be after its start time.',1);return}store.config={...(store.config||{}),defaults:out};persist();say('dataMsg','Workday times saved.');render()};
+function renderDefs(){if($('defsBox').contains(document.activeElement))return;$('defsBox').innerHTML=dayDefs().map(x=>`<div class="addrow" style="margin-top:6px"><span class="wide" style="font-weight:600">${esc(x.name)}</span><label class="f">Start<input type="time" data-def="${x.id}" data-k="start" value="${x.start}"></label><label class="f">End<input type="time" data-def="${x.id}" data-k="end" value="${x.end}"></label></div>`).join('')}
+
 function renderAlert(){
+  if($('alert').contains(document.activeElement))return;
   const m=mins(nowT());let html='';
-  const next=evOf(TODAY).filter(e=>e.time&&mins(e.time)>=m&&mins(e.time)-m<=30)[0];
-  if(next){const left=mins(next.time)-m;html=`<span>${esc(next.text)} ${left?`in ${left} min`:'now'}${next.loc?', '+esc(next.loc):''}</span>${next.link&&/^https:\/\//i.test(next.link)?`<a href="${esc(next.link)}" target="_blank" rel="noopener noreferrer">Open link</a>`:''}`}
-  else if(logOf(TODAY).some(x=>!x.end)&&m>=990&&!overtime)html='<span>It\'s past 4:30 and the work timer is still running.</span>';
+  const stale=staleRun();
+  if(stale)html=`<span>${stale.k===TODAY?"It's past 4:30 and the work timer is still running.":`The work timer from ${esc(parse(stale.k).toLocaleDateString(undefined,{weekday:'long'}))} never stopped.`}</span><span class="acts">${stale.k===TODAY?'<button class="mini" data-stop="now">Stop now</button>':''}<button class="mini" data-stop="1630">Stop at 4:30</button><input type="time" id="stopAt" aria-label="Stop at time" style="width:auto;min-height:36px;padding:4px 8px"><button class="mini" data-stop="at">Stop at this time</button></span>`;
+  if(!html){const next=evOf(TODAY).filter(e=>e.time&&mins(e.time)>=m&&mins(e.time)-m<=30)[0];
+    if(next){const left=mins(next.time)-m;html=`<span>${esc(next.text)} ${left?`in ${left} min`:'now'}${next.loc?', '+esc(next.loc):''}</span>${next.link&&/^https:\/\//i.test(next.link)?`<a href="${esc(next.link)}" target="_blank" rel="noopener noreferrer">Open link</a>`:''}`}}
+  if(!html)html=dayPrompt(m);
   $('alert').innerHTML=html;$('alert').hidden=!html;
 }
 setInterval(renderAlert,30000);
+
 
 /* ---------- render ---------- */
 function render(){
@@ -496,7 +557,7 @@ function render(){
   $('date').textContent=(cur===TODAY?'Today, ':'')+parse(cur).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});$('next').disabled=cur>=TODAY;
   if(tab==='today'){renderNow();renderTasks();renderSched();renderLog();renderCard()}
   else if(tab==='plan')renderPlan();
-  else if(!$('horizons').contains(document.activeElement))renderReview();
+  else{if(!$('horizons').contains(document.activeElement))renderReview();renderDefs()}
 }
 setInterval(()=>{if(tab==='today'&&cur===TODAY&&editing<0&&document.activeElement!==$('runWhat')){renderNow();renderTasks();renderLog();renderCard()}},30000);
 try{const t=localStorage.getItem('shiftcard.tab');if(t==='today'||t==='plan'||t==='review')tab=t}catch(e){}
