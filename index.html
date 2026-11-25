@@ -85,9 +85,30 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--mute);font-size:15px;
 .dow{font-size:13px;color:var(--mute);text-align:center}
 .cal .day{min-height:70px;border:1px solid var(--line);border-radius:6px;padding:4px 5px;text-align:left;font-size:12px;display:flex;flex-direction:column;gap:2px;justify-content:flex-start;background:var(--card)}
 .cal .day b{font-size:13px}.cal .day.other{opacity:.4}.cal .day.today{outline:2px solid var(--hi)}.cal .day.sel{border:2px solid var(--ink)}
-.cal .ev{background:var(--okBg);border-radius:3px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal .ev{background:var(--bg);border-left:3px solid var(--c,#8a949c);border-radius:3px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal .ev.task{border-left-style:dashed}
+.cal .pips{display:none;gap:2px;flex-wrap:wrap}.cal .pips i{width:7px;height:7px;border-radius:2px;background:var(--c,#8a949c)}
+.swatch{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--c);vertical-align:-1px;margin-right:6px}
+.catrows li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:0;border-bottom:1px dashed var(--line)}
+.catrows button{border:0;border-radius:0;text-align:left;width:100%;padding:10px 0;display:grid;grid-template-columns:minmax(0,1fr) 4em 5.5em;gap:8px;align-items:center;font-size:15px}
+.catrows button[aria-pressed=true]{font-weight:700}.catrows .n{text-align:right;color:var(--mute);font-variant-numeric:tabular-nums}
+.catbar{height:6px;border-radius:3px;background:var(--c);opacity:.85;margin-top:4px}
+.dayplan{position:relative;margin:6px 0 14px;border-top:1px solid var(--line)}
+.dayplan .hr{position:absolute;left:0;right:0;border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
+.dayplan .hr span{position:absolute;top:-8px;left:0;background:var(--card);padding-right:4px;font-variant-numeric:tabular-nums}
+.dayplan .band{position:absolute;left:50px;right:0;background:var(--bg);border-left:3px solid var(--line);font-size:12px;color:var(--mute);padding:2px 6px}
+.dayplan .blk{position:absolute;border-radius:6px;padding:3px 6px;font-size:13px;line-height:1.25;overflow:hidden;text-align:left;border:0;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 22%,var(--card));color:var(--ink);min-height:22px;cursor:pointer}
+.dayplan .blk small{display:block;color:var(--mute);font-size:12px}
+.dayplan .nowline{position:absolute;left:44px;right:0;border-top:2px solid var(--warn)}
+.allday{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.allday span{font-size:13px;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card));padding:3px 8px;border-radius:5px}
+.catsel{display:flex;flex-wrap:wrap;gap:6px}.catsel label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:18px;padding:6px 12px;font-size:14px;cursor:pointer;min-height:38px}
+.catsel input{position:absolute;opacity:0;width:1px;height:1px}.catsel label:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--card));font-weight:600}
+.catsel label:has(input:focus-visible){outline:3px solid var(--hi)}
+.pal{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.pal button{width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;background:var(--c);border:3px solid transparent}.pal button[aria-checked=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--card) inset}
+.catedit li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0}
+.catedit input[type=color]{width:48px;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;margin-left:4px;vertical-align:middle}
-@media(max-width:600px){.cal .day{min-height:50px;font-size:11px}.cal .ev{display:none}.cal .day.has b::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hi);margin-left:3px;vertical-align:middle}}
+@media(max-width:600px){.cal .day{min-height:50px;font-size:11px}.cal .ev{display:none}.cal .pips{display:flex}}
 /* review */
 .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .cell{aspect-ratio:1;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;font-size:13px;color:var(--mute);background:transparent;padding:0;min-height:0}
@@ -124,7 +145,8 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--mute);font-size:15px;
     <div class="row"><button class="main" id="cmdRun">Add these</button><button id="cmdClose">Close</button></div>
     <p class="msg" id="cmdMsg" aria-live="polite"></p>
     <details><summary>What Claude can send</summary>
-<pre>2026-12-01 07:00-07:30 BETA interview @ Teams https://...   (schedule; times, @ location and link optional)
+<pre>2026-12-01 07:00-07:30 BETA interview #jobs @ Teams https://...
+                                        (schedule; times, #category, @ location, link optional)
 top: Prep for the BETA interview        (this week's top three)
 goal3: Credit cards paid off            (3 month goal)
 goal6: Living in Vermont                (6 month goal)
@@ -193,13 +215,15 @@ task 2026-12-03: Submit expense report  (task with a due date)</pre>
         <div class="mhead"><button id="mPrev" aria-label="Previous month">&#8249;</button><h2 id="mTitle"></h2><button id="mNext" aria-label="Next month">&#8250;</button></div>
         <div class="cal" id="mDows"></div>
         <div class="cal" id="mGrid" style="margin-top:4px"></div>
-        <p class="foot">Green dot: shutdown fully signed that day.</p>
+        <p class="foot">Colored marks are planned items, by category. Green dot: shutdown fully signed.</p>
+        <h2 style="margin-top:18px">Next 30 days by category</h2><ul class="catrows" id="catRows"></ul><p class="foot">Tap a category to show only its items. Tap it again to show everything.</p><div class="row"><button id="manageCats">Add or edit categories</button></div>
       </section>
       <section class="panel">
         <h2 id="evTitle"></h2>
+        <div class="allday" id="allDay"></div><div class="dayplan" id="dayPlan"></div>
         <ul class="plain" id="evList"></ul>
         <div class="row"><span id="openDayRow"><button id="openDay">Open this day</button></span><button id="icsAll">Add next 60 days to phone calendar</button></div>
-        <form class="addrow" id="evForm"><label class="f wide">Date<input type="date" id="evDate" required></label><label class="f">Start (optional)<input type="time" id="evTime"></label><label class="f">End (optional)<input type="time" id="evEnd"></label><input class="wide" type="text" id="evText" placeholder="Appointment, deadline, interview, flight" aria-label="What" required><input class="wide" type="text" id="evLoc" placeholder="Location (optional)" aria-label="Location"><input class="wide" type="text" id="evLink" inputmode="url" placeholder="Meeting link (optional), paste from the email" aria-label="Meeting link"><button class="main wide">Add to schedule</button></form>
+        <form class="addrow" id="evForm"><label class="f wide">Date<input type="date" id="evDate" required></label><label class="f">Start (optional)<input type="time" id="evTime"></label><label class="f">End (optional)<input type="time" id="evEnd"></label><input class="wide" type="text" id="evText" placeholder="Appointment, deadline, interview, flight" aria-label="What" required><div class="wide catsel" id="evCats" role="radiogroup" aria-label="Category"></div><div class="wide"><button type="button" class="mini" id="newCatBtn">+ New category</button><div id="newCatBox" hidden style="margin-top:8px"><input type="text" id="newCatName" placeholder="Category name, like Flying or Health" aria-label="New category name"><div class="pal" id="newCatPal" role="radiogroup" aria-label="Color"></div><div class="row"><button type="button" class="main" id="newCatSave">Add category</button><button type="button" id="newCatCancel">Cancel</button></div></div></div><input class="wide" type="text" id="evLoc" placeholder="Location (optional)" aria-label="Location"><input class="wide" type="text" id="evLink" inputmode="url" placeholder="Meeting link (optional), paste from the email" aria-label="Meeting link"><button class="main wide">Add to schedule</button></form>
         <p class="msg" id="evMsg" aria-live="polite"></p>
       </section>
     </div>
@@ -230,6 +254,7 @@ task 2026-12-03: Submit expense report  (task with a due date)</pre>
           <p class="foot">Calendar files download to your phone. Tap the download and open it with your calendar app. The calendar sends the alerts, even when this app is closed.</p>
           <div class="row"><button id="dl">Download backup</button><button id="restoreBtn">Restore backup</button><input type="file" id="restore" accept=".json,application/json" hidden></div>
           <p class="msg" id="dataMsg" aria-live="polite"></p>
+          <details><summary>Categories and colors</summary><ul class="catedit" id="catEdit"></ul><div class="row"><button id="catAdd">Add a category</button><button class="main" id="catSave">Save categories</button></div></details>
           <details><summary>Workday times (meeting, breaks, lunch)</summary><p class="foot">Defaults for the prompts. Each day you can still start late or run long.</p><div id="defsBox"></div><div class="row"><button class="main" id="saveDefs">Save times</button></div></details>
           <details><summary>Edit the shutdown checklist</summary>
             <label class="f" style="margin-top:8px">One item per line<textarea id="habitsTxt" style="min-height:150px"></textarea></label>
@@ -283,7 +308,12 @@ const evOf=k=>Array.isArray(store.events[k])?store.events[k]:[];
 const splitLoc=x=>{const i=x.lastIndexOf(' @ ');return i>0?[x.slice(0,i).trim(),x.slice(i+3).trim()]:[x,'']};
 const URLRE=/https:\/\/[^\s<>"']+/i;
 const takeLink=x=>{const m=x.match(URLRE);return m?[x.replace(m[0],'').replace(/\s{2,}/g,' ').replace(/\s+@\s*$/,'').trim(),m[0]]:[x,'']};
-const addEvent=(d,t,en,x,loc='',link='')=>{let l2;[x,l2]=takeLink(x);link=link||l2;if(!loc)[x,loc]=splitLoc(x);if(!link&&loc){[loc,l2]=takeLink(loc);link=l2}const a=[...evOf(d),{time:t||'',end:t?en||'':'',text:x,loc:loc||'',link:URLRE.test(link)?link:''}];a.sort((p,q)=>(mins(p.time)??-1)-(mins(q.time)??-1));store.events[d]=a};
+const CATDEF=[{id:'work',name:'Work',color:'#3b6ea8'},{id:'jobs',name:'Job search',color:'#d9822b'},{id:'mba',name:'MBA',color:'#7b5ea7'},{id:'side',name:'Side projects',color:'#2a9d8f'},{id:'family',name:'Family',color:'#c8507a'},{id:'other',name:'Other',color:'#8a949c'}];
+const cats=()=>{const c=store.config;return c&&Array.isArray(c.cats)&&c.cats.length?c.cats:CATDEF};
+const catOf=id=>cats().find(c=>c.id===id)||cats().find(c=>c.id==='other')||{id:'other',name:'Other',color:'#8a949c'};
+const safeColor=c=>/^#[0-9a-f]{6}$/i.test(c)?c:'#8a949c';
+const takeCat=x=>{const m=x.match(/(?:^|\s)#([A-Za-z][\w-]*)/);if(!m)return[x,''];const tok=m[1].toLowerCase().replace(/[-_]/g,'');const c=cats().find(c=>c.id===tok||c.name.toLowerCase().replace(/[\s_-]/g,'').startsWith(tok));return[x.replace(m[0],' ').replace(/\s{2,}/g,' ').trim(),c?c.id:'']};
+const addEvent=(d,t,en,x,loc='',link='',cat='')=>{let c2;[x,c2]=takeCat(x);cat=cat||c2||'other';let l2;[x,l2]=takeLink(x);link=link||l2;if(!loc)[x,loc]=splitLoc(x);if(!link&&loc){[loc,l2]=takeLink(loc);link=l2}const a=[...evOf(d),{time:t||'',end:t?en||'':'',text:x,loc:loc||'',link:URLRE.test(link)?link:'',cat}];a.sort((p,q)=>(mins(p.time)??-1)-(mins(q.time)??-1));store.events[d]=a};
 const weekItems=()=>{const w=store.weeks[WK];const it=w&&Array.isArray(w.items)?w.items:[];return [0,1,2].map(i=>({t:String((it[i]||{}).t||''),done:!!(it[i]||{}).done}))};
 const setWeek=items=>{store.weeks[WK]={week:WK,items};persist()};
 const H=[{id:'m3',n:3,title:'3 months out'},{id:'m6',n:6,title:'6 months out'}];
@@ -367,7 +397,7 @@ $('runWhat').addEventListener('blur',e=>{clearTimeout(whatT);setRunWhat(e.target
 $('chips').addEventListener('click',e=>{const b=e.target.closest('[data-chip]');if(!b)return;const a=logOf(TODAY),run=a.find(x=>!x.end);if(run&&!run.what){setRunWhat(b.dataset.chip);render()}else punch(b.dataset.chip)});
 function renderSched(){
   const ev=evOf(cur);$('schedPanel').hidden=!ev.length;
-  $('sched').innerHTML=ev.map((e,i)=>`<li><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span><span class="acts"><button class="mini" data-sics="${i}">Add to calendar</button></span></li>`).join('');
+  $('sched').innerHTML=ev.map((e,i)=>`<li style="box-shadow:inset 4px 0 0 ${safeColor(catOf(e.cat).color)};padding-left:10px"><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span><span class="acts"><button class="mini" data-sics="${i}">Add to calendar</button></span></li>`).join('');
 }
 
 /* ---------- today: time log ---------- */
@@ -403,17 +433,58 @@ $('prev').onclick=()=>{cur=addDays(cur,-1);editing=-1;render()};$('next').onclic
 
 /* ---------- plan: month ---------- */
 let evEditing=-1;
-const evEditor=e=>`<div class="ed" style="grid-column:1/-1"><label class="f" style="grid-column:1/-1">Date<input type="date" data-ee="date" value="${esc(mSel)}"></label><label class="f">Start<input type="time" data-ee="time" value="${esc(e.time||'')}"></label><label class="f">End<input type="time" data-ee="end" value="${esc(e.end||'')}"></label><input type="text" data-ee="text" value="${esc(e.text)}" aria-label="What"><input type="text" data-ee="loc" value="${esc(e.loc||'')}" placeholder="Location" aria-label="Location"><input type="text" data-ee="link" value="${esc(e.link||'')}" placeholder="Meeting link" aria-label="Meeting link"><button class="main" data-eesave="1">Save</button><button data-eecancel="1">Cancel</button></div>`;
+let catFilter='';
+const catPicker=(name,sel)=>cats().map(c=>`<label style="--c:${safeColor(c.color)}"><input type="radio" name="${name}" value="${esc(c.id)}"${c.id===sel?' checked':''}><span class="swatch" style="--c:${safeColor(c.color)}"></span>${esc(c.name)}</label>`).join('');
+const durOf=e=>e.time?Math.max(0,mins(e.end||plusMin(e.time,30))-mins(e.time)):0;
+function renderCatRows(){const tot={};cats().forEach(c=>tot[c.id]={n:0,m:0});for(let i=0;i<30;i++){const k=addDays(TODAY,i);evOf(k).forEach(e=>{const id=catOf(e.cat).id;tot[id]=tot[id]||{n:0,m:0};tot[id].n++;tot[id].m+=durOf(e)})}
+  const max=Math.max(1,...Object.values(tot).map(x=>x.m));
+  $('catRows').innerHTML=cats().map(c=>{const t=tot[c.id]||{n:0,m:0};return `<li><button data-cat="${esc(c.id)}" aria-pressed="${catFilter===c.id}" style="--c:${safeColor(c.color)}"><span><span class="swatch"></span>${esc(c.name)}<div class="catbar" style="width:${Math.round(t.m/max*100)}%"></div></span><span class="n">${t.n} item${t.n===1?'':'s'}</span><span class="n">${t.m?dur(t.m):''}</span></button></li>`}).join('')}
+function renderDayPlan(){
+  const ev=evOf(mSel).map((e,i)=>({...e,i})).filter(e=>!catFilter||catOf(e.cat).id===catFilter),timed=ev.filter(e=>e.time),allday=ev.filter(e=>!e.time);
+  $('allDay').innerHTML=allday.map(e=>`<span style="--c:${safeColor(catOf(e.cat).color)}">${esc(e.text)}</span>`).join('')+tasks().filter(x=>x.due===mSel&&!x.done).map(x=>`<span style="--c:#8a949c;border-left-style:dashed">Due: ${esc(x.t)}</span>`).join('');
+  let sH=6,eH=21;timed.forEach(e=>{sH=Math.min(sH,Math.floor(mins(e.time)/60));eH=Math.max(eH,Math.ceil(mins(e.end||plusMin(e.time,30))/60))});eH=Math.min(eH,24);
+  const PX=0.9,top=m=>(m-sH*60)*PX;let h='';
+  for(let hr=sH;hr<=eH;hr++)h+=`<div class="hr" style="top:${top(hr*60)}px"><span>${hr===12?'12pm':hr===24?'12am':hr>12?(hr-12)+'pm':hr+'am'}</span></div>`;
+  if(workday(mSel)){const D=dayDefs();h+=`<div class="band" style="top:${top(360)}px;height:${(990-360)*PX}px">Workday</div>`;D.filter(d=>d.id!=='meet').forEach(d=>{h+=`<div class="band" style="top:${top(mins(d.start))}px;height:${(mins(d.end)-mins(d.start))*PX}px;left:50px;border-left-color:transparent;background:repeating-linear-gradient(45deg,transparent 0 6px,var(--line) 6px 7px)"></div>`})}
+  const items=timed.map(e=>({e,s:mins(e.time),en:Math.max(mins(e.time)+15,mins(e.end||plusMin(e.time,30)))})).sort((a,b)=>a.s-b.s);
+  const cols=[];let cluster=[],cEnd=-1;const flush=()=>{const n=Math.max(...cluster.map(x=>x.col))+1;cluster.forEach(x=>x.n=n);cluster=[]};
+  items.forEach(it=>{if(it.s>=cEnd&&cluster.length){flush();cols.length=0}let c=cols.findIndex(end=>end<=it.s);if(c<0){c=cols.length;cols.push(0)}cols[c]=it.en;it.col=c;cluster.push(it);cEnd=Math.max(cEnd,it.en)});if(cluster.length)flush();
+  items.forEach(it=>{const c=safeColor(catOf(it.e.cat).color),w=`(100% - 54px) / ${it.n}`;h+=`<button class="blk" data-plan="${it.e.i}" style="--c:${c};top:${top(it.s)}px;height:${Math.max(22,(it.en-it.s)*PX-2)}px;left:calc(54px + ${w} * ${it.col});width:calc(${w} - 4px)">${(it.en-it.s)*PX<40?`${esc(it.e.text)} <span style="color:var(--mute);font-size:12px">${esc(t12(it.e.time))}</span>`:`${esc(it.e.text)}<small>${esc(range(it.e))}${it.e.loc?' · '+esc(it.e.loc):''}</small>`}</button>`});
+  if(mSel===TODAY){const m=mins(nowT());if(m>=sH*60&&m<=eH*60)h+=`<div class="nowline" style="top:${top(m)}px"></div>`}
+  $('dayPlan').style.height=((eH-sH)*60*PX+10)+'px';$('dayPlan').innerHTML=h;
+}
+$('catRows').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b)return;catFilter=catFilter===b.dataset.cat?'':b.dataset.cat;renderPlan()});
+$('dayPlan').addEventListener('click',e=>{const b=e.target.closest('[data-plan]');if(!b)return;evEditing=+b.dataset.plan;renderPlan();const ed=$('evList').querySelector('.ed');if(ed)ed.scrollIntoView({block:'center',behavior:'smooth'})});
+const PALETTE=['#3b6ea8','#d9822b','#7b5ea7','#2a9d8f','#c8507a','#4f8f3a','#c0392b','#b8860b','#1f8fb3','#6d4c41','#e05d9b','#8a949c'];
+let newColor=PALETTE[5];
+const renderPal=(el,sel)=>{el.innerHTML=PALETTE.map(c=>`<button type="button" role="radio" aria-checked="${c===sel}" aria-label="Color ${c}" data-pc="${c}" style="--c:${c}"></button>`).join('')};
+$('newCatBtn').onclick=()=>{const used=cats().map(c=>c.color);newColor=PALETTE.find(c=>!used.includes(c))||PALETTE[0];renderPal($('newCatPal'),newColor);$('newCatBox').hidden=false;$('newCatBtn').hidden=true;$('newCatName').focus()};
+$('newCatPal').addEventListener('click',e=>{const b=e.target.closest('[data-pc]');if(!b)return;newColor=b.dataset.pc;renderPal($('newCatPal'),newColor)});
+const closeNewCat=()=>{$('newCatBox').hidden=true;$('newCatBtn').hidden=false;$('newCatName').value=''};
+$('newCatCancel').onclick=closeNewCat;
+$('newCatSave').onclick=()=>{const n=$('newCatName').value.trim();if(!n){$('newCatName').focus();return}if(cats().some(c=>c.name.toLowerCase()===n.toLowerCase())){say('evMsg','That category already exists.',1);return}
+  let id=n.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,20)||'cat';while(cats().some(c=>c.id===id))id+='x';
+  const list=[...cats()];const oi=list.findIndex(c=>c.id==='other');list.splice(oi<0?list.length:oi,0,{id,name:n,color:newColor});store.config={...(store.config||{}),cats:list};persist();
+  closeNewCat();$('evCats').innerHTML=catPicker('evcat',id);say('evMsg',`Added ${n}.`);renderCatRows()};
+$('manageCats').onclick=()=>{showTab('review');const d=$('catEdit').closest('details');if(d){d.open=true;d.scrollIntoView({block:'start',behavior:'smooth'})}};
+function renderCatEdit(){if($('catEdit').contains(document.activeElement))return;$('catEdit').innerHTML=cats().map(c=>`<li data-cid="${esc(c.id)}"><input type="color" value="${safeColor(c.color)}" aria-label="Color"><input type="text" value="${esc(c.name)}" aria-label="Name"><button class="mini" data-crm="1"${c.id==='other'?' disabled':''}>Remove</button><div class="pal" style="grid-column:1/-1;margin-top:0">${PALETTE.map(p=>`<button type="button" aria-label="Use color ${p}" data-rowc="${p}" style="--c:${p};width:30px;height:30px;min-height:30px"></button>`).join('')}</div></li>`).join('')}
+$('catAdd').onclick=()=>{const li=document.createElement('li');li.dataset.cid='';li.innerHTML='<input type="color" value="#4f8f3a" aria-label="Color"><input type="text" placeholder="Category name" aria-label="Name"><button class="mini" data-crm="1">Remove</button><div class="pal" style="grid-column:1/-1;margin-top:0">'+PALETTE.map(p=>`<button type="button" aria-label="Use color ${p}" data-rowc="${p}" style="--c:${p};width:30px;height:30px;min-height:30px"></button>`).join('')+'</div>';$('catEdit').appendChild(li);li.querySelector('input[type=text]').focus()};
+$('catEdit').addEventListener('click',e=>{const rc=e.target.closest('[data-rowc]');if(rc){rc.closest('li').querySelector('input[type=color]').value=rc.dataset.rowc;return}const b=e.target.closest('[data-crm]');if(b)b.closest('li').remove()});
+$('catSave').onclick=()=>{const used=new Set(),out=[];[...$('catEdit').children].forEach(li=>{const n=li.querySelector('input[type=text]').value.trim();if(!n)return;let id=li.dataset.cid||n.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,20)||'cat';while(used.has(id))id+='x';used.add(id);out.push({id,name:n,color:safeColor(li.querySelector('input[type=color]').value)})});
+  if(!out.some(c=>c.id==='other'))out.push({id:'other',name:'Other',color:'#8a949c'});store.config={...(store.config||{}),cats:out};persist();say('dataMsg','Categories saved.');renderCatEdit()};
+const evEditor=e=>`<div class="ed" style="grid-column:1/-1"><label class="f" style="grid-column:1/-1">Date<input type="date" data-ee="date" value="${esc(mSel)}"></label><label class="f">Start<input type="time" data-ee="time" value="${esc(e.time||'')}"></label><label class="f">End<input type="time" data-ee="end" value="${esc(e.end||'')}"></label><input type="text" data-ee="text" value="${esc(e.text)}" aria-label="What"><div class="catsel" style="grid-column:1/-1" role="radiogroup" aria-label="Category">${catPicker('eecat',catOf(e.cat).id)}</div><input type="text" data-ee="loc" value="${esc(e.loc||'')}" placeholder="Location" aria-label="Location"><input type="text" data-ee="link" value="${esc(e.link||'')}" placeholder="Meeting link" aria-label="Meeting link"><button class="main" data-eesave="1">Save</button><button data-eecancel="1">Cancel</button></div>`;
 function renderPlan(){
   const[y,m]=mView.split('-').map(Number),first=new Date(y,m-1,1);
   $('mTitle').textContent=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
   $('mDows').innerHTML=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="dow">${x}</div>`).join('');
   let k=addDays(key(first),-((first.getDay()+6)%7)),html='';
-  for(let i=0;i<42;i++,k=addDays(k,1)){if(i>=35&&k.slice(0,7)!==mView)break;const ev=[...evOf(k),...tasks().filter(x=>x.due===k&&!x.done).map(x=>({text:'Due: '+x.t}))],d=store.days[k],full=d&&nDone(d)===habits().length;
-    html+=`<button class="day${k.slice(0,7)!==mView?' other':''}${k===TODAY?' today':''}${k===mSel?' sel':''}${ev.length?' has':''}" data-day="${k}"><b>${parse(k).getDate()}${full?'<span class="dot"></span>':''}</b>${ev.slice(0,2).map(e=>`<span class="ev">${esc(e.text)}</span>`).join('')}${ev.length>2?`<span class="ev">+${ev.length-2} more</span>`:''}</button>`}
+  for(let i=0;i<42;i++,k=addDays(k,1)){if(i>=35&&k.slice(0,7)!==mView)break;const ev=[...evOf(k),...tasks().filter(x=>x.due===k&&!x.done).map(x=>({text:'Due: '+x.t,task:1}))].filter(e=>!catFilter||(e.cat||'other')===catFilter),d=store.days[k],full=d&&nDone(d)===habits().length;
+    html+=`<button class="day${k.slice(0,7)!==mView?' other':''}${k===TODAY?' today':''}${k===mSel?' sel':''}${ev.length?' has':''}" data-day="${k}"><b>${parse(k).getDate()}${full?'<span class="dot"></span>':''}</b>${ev.slice(0,3).map(e=>`<span class="ev${e.task?' task':''}" style="--c:${safeColor(catOf(e.cat).color)}">${esc(e.text)}</span>`).join('')}${ev.length>3?`<span class="ev">+${ev.length-3} more</span>`:''}<span class="pips">${ev.slice(0,6).map(e=>`<i style="--c:${safeColor(catOf(e.cat).color)}"></i>`).join('')}</span></button>`}
   $('mGrid').innerHTML=html;
+  renderCatRows();renderDayPlan();
+  if(!$('evCats').contains(document.activeElement)){const sel=($('evCats').querySelector('input:checked')||{}).value||'other';$('evCats').innerHTML=catPicker('evcat',sel)}
   $('evTitle').textContent=longDate(mSel);
-  const ev=evOf(mSel),due=tasks().filter(x=>x.due===mSel);$('evList').innerHTML=(ev.length||due.length)?ev.map((e,i)=>`<li><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}</span>${i===evEditing?evEditor(e):''}<span class="acts"${i===evEditing?' hidden':''}><button class="mini" data-evedit="${i}">Edit</button><button class="mini" data-evics="${i}">Add to calendar</button><button class="mini" data-evdel="${i}">Remove</button></span></li>`).join('')+due.map(x=>`<li><span class="t">Task due</span><span class="w"${x.done?' style="text-decoration:line-through;color:var(--mute)"':''}>${esc(x.t)}</span>${x.done?'<span></span>':`<button class="mini" data-tkics="${esc(x.id)}">Remind me</button>`}</li>`).join(''):'<li class="empty">Nothing scheduled.</li>';
+  const ev=evOf(mSel),due=tasks().filter(x=>x.due===mSel);$('evList').innerHTML=(ev.length||due.length)?ev.map((e,i)=>`<li style="box-shadow:inset 4px 0 0 ${safeColor(catOf(e.cat).color)};padding-left:10px"><span class="t">${rangeH(e)}</span><span class="w">${evH(e)}<small class="loc"><span class="swatch" style="--c:${safeColor(catOf(e.cat).color)}"></span>${esc(catOf(e.cat).name)}</small></span>${i===evEditing?evEditor(e):''}<span class="acts"${i===evEditing?' hidden':''}><button class="mini" data-evedit="${i}">Edit</button><button class="mini" data-evics="${i}">Add to calendar</button><button class="mini" data-evdel="${i}">Remove</button></span></li>`).join('')+due.map(x=>`<li><span class="t">Task due</span><span class="w"${x.done?' style="text-decoration:line-through;color:var(--mute)"':''}>${esc(x.t)}</span>${x.done?'<span></span>':`<button class="mini" data-tkics="${esc(x.id)}">Remind me</button>`}</li>`).join(''):'<li class="empty">Nothing scheduled.</li>';
   $('openDayRow').hidden=mSel>TODAY;
   if(document.activeElement!==$('evDate'))$('evDate').value=mSel;
 }
@@ -421,13 +492,13 @@ $('mPrev').onclick=()=>{const[y,m]=mView.split('-').map(Number);mView=key(new Da
 $('mNext').onclick=()=>{const[y,m]=mView.split('-').map(Number);mView=key(new Date(y,m,1)).slice(0,7);renderPlan()};
 $('mGrid').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;evEditing=-1;mSel=b.dataset.day;mView=mSel.slice(0,7);renderPlan()});
 $('openDay').onclick=()=>{cur=mSel;showTab('today')};
-$('evForm').addEventListener('submit',e=>{e.preventDefault();const d=$('evDate').value,t=$('evTime').value,en=$('evEnd').value,x=$('evText').value.trim();if(!d||!x)return;if(t&&en&&mins(en)<=mins(t)){say('evMsg','The end time has to be after the start time.',1);return}const lk=$('evLink').value.trim();if(lk&&!URLRE.test(lk)){say('evMsg','The link has to start with https://',1);return}addEvent(d,t,en,x,$('evLoc').value.trim(),lk);persist();mSel=d;mView=d.slice(0,7);$('evText').value='';$('evLoc').value='';$('evLink').value='';$('evTime').value='';$('evEnd').value='';say('evMsg','');renderPlan()});
+$('evForm').addEventListener('submit',e=>{e.preventDefault();const d=$('evDate').value,t=$('evTime').value,en=$('evEnd').value,x=$('evText').value.trim();if(!d||!x)return;if(t&&en&&mins(en)<=mins(t)){say('evMsg','The end time has to be after the start time.',1);return}const lk=$('evLink').value.trim();if(lk&&!URLRE.test(lk)){say('evMsg','The link has to start with https://',1);return}addEvent(d,t,en,x,$('evLoc').value.trim(),lk,($('evCats').querySelector('input:checked')||{}).value||'');persist();mSel=d;mView=d.slice(0,7);$('evText').value='';$('evLoc').value='';$('evLink').value='';$('evTime').value='';$('evEnd').value='';say('evMsg','');renderPlan()});
 $('evList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.evedit!=null){evEditing=+b.dataset.evedit;renderPlan();return}
   if(b.dataset.eecancel){evEditing=-1;say('evMsg','');renderPlan();return}
   if(b.dataset.eesave){const li=b.closest('li'),g=n=>li.querySelector(`[data-ee="${n}"]`).value.trim();const d=g('date'),t=g('time'),en=g('end'),x=g('text'),lk=g('link');
     if(!d||!x){say('evMsg','It needs a date and a name.',1);return}if(t&&en&&mins(en)<=mins(t)){say('evMsg','The end time has to be after the start time.',1);return}if(lk&&!/^https:\/\//i.test(lk)){say('evMsg','The link has to start with https://',1);return}
-    const a=[...evOf(mSel)];a.splice(evEditing,1);if(a.length)store.events[mSel]=a;else delete store.events[mSel];addEvent(d,t,en,x,g('loc')||' ',lk);const moved=store.events[d];moved.forEach(z=>{if(z.loc===' ')z.loc=''});persist();evEditing=-1;mSel=d;mView=d.slice(0,7);say('evMsg','Saved.');renderPlan();return}
+    const a=[...evOf(mSel)];a.splice(evEditing,1);if(a.length)store.events[mSel]=a;else delete store.events[mSel];addEvent(d,t,en,x,g('loc')||' ',lk,(li.querySelector('input[name=eecat]:checked')||{}).value||'other');const moved=store.events[d];moved.forEach(z=>{if(z.loc===' ')z.loc=''});persist();evEditing=-1;mSel=d;mView=d.slice(0,7);say('evMsg','Saved.');renderPlan();return}
 });
 $('evList').addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.evdel;if(i==null)return;evEditing=-1;const a=[...evOf(mSel)];a.splice(+i,1);if(a.length)store.events[mSel]=a;else delete store.events[mSel];persist();renderPlan()});
 
@@ -468,7 +539,7 @@ $('copySum').onclick=()=>{const hs=habits(),L=['Shift card summary, '+TODAY,'Str
   const t=dayOf(TODAY);if(t.openwork)L.push('','Open work:',t.openwork);
   const ot=tasks().filter(x=>!x.done);if(ot.length)L.push('','Open tasks:',...ot.map(x=>x.t+(x.due?' (due '+x.due+')':'')));
   const w=weekItems().filter(x=>x.t);if(w.length)L.push('','This week:',...w.map(x=>(x.done?'[done] ':'[open] ')+x.t));
-  const up=[];for(let i=0;i<14;i++){const k=addDays(TODAY,i);evOf(k).forEach(e=>up.push(`${k} ${range(e)} ${e.text}${e.loc?' @ '+e.loc:''}${e.link?' (has link)':''}`))}if(up.length)L.push('','Next 14 days:',...up);
+  const up=[];for(let i=0;i<14;i++){const k=addDays(TODAY,i);evOf(k).forEach(e=>up.push(`${k} ${range(e)} ${e.text} [${catOf(e.cat).name}]${e.loc?' @ '+e.loc:''}${e.link?' (has link)':''}`))}if(up.length)L.push('','Next 14 days:',...up);
   H.forEach(h=>{const it=(hz(h.id).items||[]);if(it.length)L.push('',h.title+':',...it.map(x=>(x.done?'[done] ':'[open] ')+x.t))});
   copyText(L.join('\n'),'dataMsg')};
 
@@ -557,7 +628,7 @@ function render(){
   $('date').textContent=(cur===TODAY?'Today, ':'')+parse(cur).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});$('next').disabled=cur>=TODAY;
   if(tab==='today'){renderNow();renderTasks();renderSched();renderLog();renderCard()}
   else if(tab==='plan')renderPlan();
-  else{if(!$('horizons').contains(document.activeElement))renderReview();renderDefs()}
+  else{if(!$('horizons').contains(document.activeElement))renderReview();renderDefs();renderCatEdit()}
 }
 setInterval(()=>{if(tab==='today'&&cur===TODAY&&editing<0&&document.activeElement!==$('runWhat')){renderNow();renderTasks();renderLog();renderCard()}},30000);
 try{const t=localStorage.getItem('shiftcard.tab');if(t==='today'||t==='plan'||t==='review')tab=t}catch(e){}
