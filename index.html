@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:; manifest-src 'self'; worker-src 'self'">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1b2530">
 <link rel="icon" href="icon-192.png">
@@ -36,6 +36,8 @@ button.cmd{border-color:var(--hi);font-weight:600}
 :focus-visible{outline:3px solid var(--hi);outline-offset:2px}
 input[type=text],input[type=time],input[type=date],textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-height:44px}
 textarea{min-height:72px;resize:vertical}
+select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-height:44px}
+.rec{color:var(--mute);font-size:12px;margin-left:6px;white-space:nowrap}
 label.f{display:grid;gap:6px;font-weight:600;font-size:15px}.hint{font-weight:400;color:var(--mute);font-size:13px}
 .grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
 @media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
@@ -154,7 +156,9 @@ park: Mag timing box                    (parking lot)
 first: Ops check on N123                (tomorrow's first task)
 open: N123 gear swing, rigging done     (open work note, today)
 task: Order brake parts                 (task, no due date)
-task 2026-12-03: Submit expense report  (task with a due date)</pre>
+task 2026-12-03: Submit expense report  (task with a due date)
+task every monday: Update squawk list   (repeating: every day, workdays,
+                                        every monday, monthly 15)</pre>
     </details>
   </section>
 
@@ -175,7 +179,7 @@ task 2026-12-03: Submit expense report  (task with a due date)</pre>
         <section class="panel" id="taskPanel">
           <h2>Tasks</h2>
           <ul class="checks" id="tasks"></ul>
-          <form class="addrow" id="taskForm"><input class="wide" type="text" id="taskIn" placeholder="Add a task" aria-label="New task"><label class="f">Due (optional)<input type="date" id="taskDue"></label><button class="main" style="align-self:end">Add task</button></form>
+          <form class="addrow" id="taskForm"><input class="wide" type="text" id="taskIn" placeholder="Add a task" aria-label="New task"><label class="f"><span id="taskDueLbl">Due (optional)</span><input type="date" id="taskDue"></label><label class="f">Repeat<select id="taskRep"><option value="">Never</option><option value="daily">Every day</option><option value="workdays">Workdays (Mon to Thu)</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></label><button class="main wide">Add task</button></form>
         </section>
         <section class="panel" id="schedPanel">
           <h2>Schedule</h2>
@@ -254,6 +258,24 @@ task 2026-12-03: Submit expense report  (task with a due date)</pre>
           <p class="foot">Calendar files download to your phone. Tap the download and open it with your calendar app. The calendar sends the alerts, even when this app is closed.</p>
           <div class="row"><button id="dl">Download backup</button><button id="restoreBtn">Restore backup</button><input type="file" id="restore" accept=".json,application/json" hidden></div>
           <p class="msg" id="dataMsg" aria-live="polite"></p>
+          <details id="ntBox"><summary>Notifications (ntfy)</summary>
+            <label class="f" style="display:flex;gap:10px;align-items:center;margin-top:6px"><input type="checkbox" id="ntOn" class="chk" style="margin:0"> Send reminders to the ntfy app</label>
+            <div id="ntOpts" hidden>
+              <p class="foot">In ntfy, tap +, choose "Subscribe to topic," and paste this channel name. Leave the server as ntfy.sh unless you change it below.</p>
+              <p style="font:600 16px ui-monospace,monospace;overflow-wrap:anywhere;margin:8px 0" id="ntTopic"></p>
+              <div class="row"><button id="ntCopy">Copy channel name</button><button id="ntTest">Send a test</button></div>
+              <label class="f" style="display:flex;gap:10px;align-items:center;margin-top:12px"><input type="checkbox" id="ntPriv" class="chk" style="margin:0"> Private mode: schedule reminders don't include titles, places or links</label>
+              <p class="foot" style="margin-top:10px">Remind me about:</p>
+              <label class="f" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ntEv" class="chk" style="margin:0"> Schedule items, 15 minutes before</label>
+              <label class="f" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ntDay" class="chk" style="margin:0"> Workday: morning meeting, breaks, lunch, 4:20 shutdown</label>
+              <label class="f" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ntTk" class="chk" style="margin:0"> Tasks due, at 7:00 am</label>
+              <div class="row"><button class="main" id="ntNow">Schedule now</button><button id="ntNew">Make a new channel</button></div>
+              <label class="f" style="margin-top:12px">ntfy server<input type="text" id="ntServer" inputmode="url"></label>
+              <p class="foot" id="ntStatus"></p>
+            </div>
+            <p class="msg" id="ntMsg" aria-live="polite"></p>
+            <p class="foot">Reminders are scheduled up to 3 days ahead each time you open the app. If you change an item after its reminder is set, the old reminder may still arrive.</p>
+          </details>
           <details><summary>Categories and colors</summary><ul class="catedit" id="catEdit"></ul><div class="row"><button id="catAdd">Add a category</button><button class="main" id="catSave">Save categories</button></div></details>
           <details><summary>Workday times (meeting, breaks, lunch)</summary><p class="foot">Defaults for the prompts. Each day you can still start late or run long.</p><div id="defsBox"></div><div class="row"><button class="main" id="saveDefs">Save times</button></div></details>
           <details><summary>Edit the shutdown checklist</summary>
@@ -291,11 +313,11 @@ const copyText=async(text,id)=>{try{await navigator.clipboard.writeText(text);sa
 const LS='shiftcard.v1';
 const DEF=[{id:'time',label:'Logged my time'},{id:'board',label:'Updated the task board'},{id:'verify',label:'Everything I closed today was checked against the card or manual at the moment I signed it'},{id:'open',label:'Wrote a status note for every open multi-day job'},{id:'first',label:"Wrote down tomorrow's first task"},{id:'speak',label:"Raised anything that's bugging me, or nothing is"}];
 const blank=()=>({days:{},weeks:{},config:null,logs:{},events:{},outlook:{},tasks:[]});
-const norm=o=>({days:o.days||{},weeks:o.weeks||{},config:o.config||null,logs:o.logs||{},events:o.events||{},outlook:o.outlook||{},tasks:Array.isArray(o.tasks)?o.tasks:[],prompts:o.prompts||{}});
+const norm=o=>({days:o.days||{},weeks:o.weeks||{},config:o.config||null,logs:o.logs||{},events:o.events||{},outlook:o.outlook||{},tasks:Array.isArray(o.tasks)?o.tasks:[],prompts:o.prompts||{},recur:Array.isArray(o.recur)?o.recur:[],recurDone:o.recurDone||{}});
 let store=blank();
 try{const raw=localStorage.getItem(LS);if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object')store=norm(o)}}catch(e){}
 for(const k of Object.keys(store.events)){if(!Array.isArray(store.events[k]))continue;store.events[k]=store.events[k].map(e=>{let t=String(e.text||''),loc=e.loc||'',link=e.link||'';const u=t.match(/https:\/\/[^\s<>"']+/i);if(u&&!link){link=u[0];t=t.replace(u[0],'').trim()}const i=t.lastIndexOf(' @ ');if(i>0&&!loc){loc=t.slice(i+3).trim();t=t.slice(0,i).trim()}return {...e,text:t,loc,link}})}
-const persist=()=>{try{localStorage.setItem(LS,JSON.stringify(store))}catch(e){say('dataMsg',"This browser isn't letting the app save. Download a backup now.",1)}};
+const persist=()=>{if(window.__ntq)window.__ntq();try{localStorage.setItem(LS,JSON.stringify(store))}catch(e){say('dataMsg',"This browser isn't letting the app save. Download a backup now.",1)}};
 const habits=()=>{const c=store.config;return c&&Array.isArray(c.habits)&&c.habits.length?c.habits:DEF};
 const parking=()=>{const c=store.config;return c&&Array.isArray(c.parking)?c.parking:[]};
 const setCfg=(h,p)=>{store.config={...(store.config||{}),habits:h,parking:p};persist()};
@@ -337,6 +359,9 @@ $('cmdRun').onclick=()=>{
   for(const l of lines){
     let m=l.match(/^(?:cal:\s*)?(\d{4}-\d{2}-\d{2})(?:\s+(\d{1,2}:\d{2})(?:\s*(?:-|to)\s*(\d{1,2}:\d{2}))?)?\s+(.+)$/i);
     if(m&&!isNaN(parse(m[1]))){const t=pad(m[2]),en=pad(m[3]);if(t&&en&&mins(en)<=mins(t)){bad.push(l);continue}addEvent(m[1],t,en,m[4].trim());done.push('schedule');mSel=m[1];mView=m[1].slice(0,7);continue}
+    m=l.match(/^task\s+(every\s*day|daily|workdays|weekdays|every\s+(sun|mon|tue|wed|thu|fri|sat)[a-z]*|weekly|monthly(?:\s+(\d{1,2}))?)\s*:\s*(.+)$/i);
+    if(m){const f=m[1].toLowerCase();let r;if(/day|daily/.test(f)&&!m[2]&&!/work|week/.test(f))r={freq:'daily'};else if(/work|weekdays/.test(f))r={freq:'workdays'};else if(m[2])r={freq:'weekly',days:[['sun','mon','tue','wed','thu','fri','sat'].indexOf(m[2].toLowerCase())]};else if(f==='weekly')r={freq:'weekly',days:[parse(TODAY).getDay()]};else{const d=+(m[3]||parse(TODAY).getDate());if(d<1||d>31){bad.push(l);continue}r={freq:'monthly',dom:d}}
+      addRecur(m[4].trim(),r,TODAY);done.push('repeating tasks');continue}
     m=l.match(/^task(?:\s+(\d{4}-\d{2}-\d{2}))?:\s*(.+)$/i);
     if(m){if(m[1]&&isNaN(parse(m[1]))){bad.push(l);continue}addTask(m[2].trim(),m[1]||'');done.push('tasks');continue}
     m=l.match(/^(top|goal3|goal6|park|first|open):\s*(.+)$/i);
@@ -357,15 +382,35 @@ $('cmdRun').onclick=()=>{
 /* ---------- tasks ---------- */
 const tasks=()=>Array.isArray(store.tasks)?store.tasks:[];
 const addTask=(t,due)=>{store.tasks=[...tasks(),{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t,due:due||'',done:false,doneOn:''}];persist()};
-const tasksFor=k=>tasks().filter(x=>x.done?x.doneOn===k:(!x.due||x.due<=k)).sort((a,b)=>(a.done-b.done)||((a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:0));
+const recurs=()=>Array.isArray(store.recur)?store.recur:[];
+const DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const ord=n=>n+(n%10===1&&n!==11?'st':n%10===2&&n!==12?'nd':n%10===3&&n!==13?'rd':'th');
+const recLabel=r=>r.freq==='daily'?'Every day':r.freq==='workdays'?'Workdays':r.freq==='weekly'?'Every '+(r.days||[]).map(d=>DOW[d]).join(', '):'Monthly on the '+ord(r.dom);
+const occurs=(r,k)=>{if(k<r.start||(r.until&&k>r.until))return false;const d=parse(k),wd=d.getDay();if(r.freq==='daily')return true;if(r.freq==='workdays')return wd>=1&&wd<=4;if(r.freq==='weekly')return (r.days||[]).includes(wd);if(r.freq==='monthly'){const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();return d.getDate()===Math.min(r.dom,last)}return false};
+const recState=(id,k)=>{const m=store.recurDone&&store.recurDone[id];return m?m[k]:undefined};
+const setRecState=(id,k,v)=>{const all={...(store.recurDone||{})};const m={...(all[id]||{})};if(v)m[k]=v;else delete m[k];all[id]=m;store.recurDone=all;persist()};
+const addRecur=(t,r,start)=>{store.recur=[...recurs(),{id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t,...r,start:start||TODAY,until:''}];persist()};
+const recurFor=k=>recurs().filter(r=>occurs(r,k)&&recState(r.id,k)!=='skip').map(r=>({id:'R|'+r.id+'|'+k,t:r.t,due:k,done:recState(r.id,k)==='done',doneOn:k,rec:r}));
+let recDel='';
+const tasksFor=k=>[...recurFor(k),...tasks()].filter(x=>x.done?x.doneOn===k:(!x.due||x.due<=k)).sort((a,b)=>(a.done-b.done)||((a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:0));
 function renderTasks(){
   const list=tasksFor(cur),work=cur===TODAY&&workOn();
   $('tasks').innerHTML=list.length?list.map(x=>{const late=!x.done&&x.due&&x.due<cur;const dueTxt=x.due?(x.due===cur?'Due today':late?'Overdue, '+parse(x.due).toLocaleDateString(undefined,{month:'short',day:'numeric'}):''):'';
-    return `<li class="${x.done?'done':''}"><input type="checkbox" class="chk" data-tk="${esc(x.id)}"${x.done?' checked':''} aria-label="Done"><span class="w">${esc(x.t)}${dueTxt?`<small class="loc"${late?' style="color:var(--warn)"':''}>${esc(dueTxt)}</small>`:''}</span><span>${work&&!x.done?`<button data-tkstart="${esc(x.id)}">Start</button>`:''}<button data-tkdel="${esc(x.id)}" aria-label="Remove task">&#10005;</button></span></li>`}).join(''):'<li class="empty">No tasks for this day.</li>';
+    if(x.rec&&recDel===x.id)return `<li><span></span><span class="w">${esc(x.t)}<small class="loc">${esc(recLabel(x.rec))}</small></span><span class="acts"><button class="mini" data-rskip="${esc(x.id)}">Skip this one</button><button class="mini" data-rstop="${esc(x.id)}">Stop repeating</button><button class="mini" data-rcancel="1">Cancel</button></span></li>`;
+    return `<li class="${x.done?'done':''}"><input type="checkbox" class="chk" data-tk="${esc(x.id)}"${x.done?' checked':''} aria-label="Done"><span class="w">${esc(x.t)}${x.rec?`<span class="rec">&#8635; ${esc(recLabel(x.rec))}</span>`:''}${dueTxt&&!x.rec?`<small class="loc"${late?' style="color:var(--warn)"':''}>${esc(dueTxt)}</small>`:''}</span><span>${work&&!x.done?`<button data-tkstart="${esc(x.id)}">Start</button>`:''}<button data-tkdel="${esc(x.id)}" aria-label="Remove task">&#10005;</button></span></li>`}).join(''):'<li class="empty">No tasks for this day.</li>';
 }
-$('tasks').addEventListener('change',e=>{const id=e.target.dataset.tk;if(!id)return;store.tasks=tasks().map(x=>x.id===id?{...x,done:e.target.checked,doneOn:e.target.checked?cur:''}:x);persist();render()});
-$('tasks').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.tkdel){store.tasks=tasks().filter(x=>x.id!==b.dataset.tkdel);persist();render()}else if(b.dataset.tkstart){const x=tasks().find(y=>y.id===b.dataset.tkstart);if(x)punch(x.t)}});
-$('taskForm').addEventListener('submit',e=>{e.preventDefault();const v=$('taskIn').value.trim();if(!v)return;addTask(v,$('taskDue').value);$('taskIn').value='';$('taskDue').value='';render();$('taskIn').focus()});
+$('tasks').addEventListener('change',e=>{const id=e.target.dataset.tk;if(!id)return;if(id.startsWith('R|')){const[,rid,k]=id.split('|');setRecState(rid,k,e.target.checked?'done':'');render();return}store.tasks=tasks().map(x=>x.id===id?{...x,done:e.target.checked,doneOn:e.target.checked?cur:''}:x);persist();render()});
+$('tasks').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.rcancel){recDel='';renderTasks();return}
+  if(b.dataset.rskip){const[,rid,k]=b.dataset.rskip.split('|');setRecState(rid,k,'skip');recDel='';render();return}
+  if(b.dataset.rstop){const[,rid,k]=b.dataset.rstop.split('|');store.recur=recurs().map(r=>r.id===rid?{...r,until:addDays(k,-1)}:r).filter(r=>!(r.until&&r.until<r.start));persist();recDel='';render();return}
+  if(b.dataset.tkdel&&b.dataset.tkdel.startsWith('R|')){recDel=b.dataset.tkdel;renderTasks();return}
+  if(b.dataset.tkstart&&b.dataset.tkstart.startsWith('R|')){const x=recurFor(TODAY).find(y=>y.id===b.dataset.tkstart);if(x)punch(x.t);return}
+  if(b.dataset.tkdel){store.tasks=tasks().filter(x=>x.id!==b.dataset.tkdel);persist();render()}else if(b.dataset.tkstart){const x=tasks().find(y=>y.id===b.dataset.tkstart);if(x)punch(x.t)}});
+$('taskRep').addEventListener('change',()=>{$('taskDueLbl').textContent=$('taskRep').value?'Starting':'Due (optional)';if($('taskRep').value&&!$('taskDue').value)$('taskDue').value=cur});
+$('taskForm').addEventListener('submit',e=>{e.preventDefault();const v=$('taskIn').value.trim();if(!v)return;const rep=$('taskRep').value;
+  if(rep){const st=$('taskDue').value||cur,d=parse(st);addRecur(v,rep==='weekly'?{freq:'weekly',days:[d.getDay()]}:rep==='monthly'?{freq:'monthly',dom:d.getDate()}:{freq:rep},st)}else addTask(v,$('taskDue').value);
+  $('taskIn').value='';$('taskDue').value='';$('taskRep').value='';$('taskDueLbl').textContent='Due (optional)';render();$('taskIn').focus()});
 
 /* ---------- work window: 6:00 to 4:30, Monday to Thursday, unless overtime ---------- */
 let overtime=false;
@@ -538,6 +583,7 @@ $('copySum').onclick=()=>{const hs=habits(),L=['Shift card summary, '+TODAY,'Str
   L.push('','Last 14 days:');for(let i=13;i>=0;i--){const k=addDays(TODAY,-i),d=store.days[k],lg=logStats(k);if(!d&&!lg.n&&!workday(k))continue;if(!d&&!lg.n){L.push(k+': nothing logged');continue}let l=k+': '+(d?nDone(d):0)+'/'+hs.length+' signed';const miss=d?hs.filter(h=>!(d.checks&&d.checks[h.id])).map(h=>h.label):[];if(d&&miss.length&&miss.length<hs.length)l+=' (missed: '+miss.join('; ')+')';if(lg.n)l+=` | time ${dur(lg.total)}, gaps ${dur(lg.gaps)}`;if(d&&d.bugging)l+=' | bugging: '+d.bugging;if(d&&d.win)l+=' | win: '+d.win;L.push(l)}
   const t=dayOf(TODAY);if(t.openwork)L.push('','Open work:',t.openwork);
   const ot=tasks().filter(x=>!x.done);if(ot.length)L.push('','Open tasks:',...ot.map(x=>x.t+(x.due?' (due '+x.due+')':'')));
+  const rc=recurs().filter(r=>!r.until||r.until>=TODAY);if(rc.length)L.push('','Repeating tasks:',...rc.map(r=>`${r.t} (${recLabel(r)})`));
   const w=weekItems().filter(x=>x.t);if(w.length)L.push('','This week:',...w.map(x=>(x.done?'[done] ':'[open] ')+x.t));
   const up=[];for(let i=0;i<14;i++){const k=addDays(TODAY,i);evOf(k).forEach(e=>up.push(`${k} ${range(e)} ${e.text} [${catOf(e.cat).name}]${e.loc?' @ '+e.loc:''}${e.link?' (has link)':''}`))}if(up.length)L.push('','Next 14 days:',...up);
   H.forEach(h=>{const it=(hz(h.id).items||[]);if(it.length)L.push('',h.title+':',...it.map(x=>(x.done?'[done] ':'[open] ')+x.t))});
@@ -621,6 +667,56 @@ function renderAlert(){
 setInterval(renderAlert,30000);
 
 
+/* ---------- notifications through ntfy ---------- */
+const NT=()=>{const n=store.ntfy;return n&&typeof n==='object'?n:{}};
+const setNT=patch=>{store.ntfy={...NT(),...patch};persist()};
+const randTopic=()=>{const a=new Uint8Array(15);crypto.getRandomValues(a);return 'shiftcard-'+Array.from(a,b=>'abcdefghijkmnpqrstuvwxyz23456789'[b%32]).join('')};
+const ntServer=()=>{const s0=(NT().server||'https://ntfy.sh').trim().replace(/\/+$/,'');return /^https:\/\//i.test(s0)?s0:'https://ntfy.sh'};
+const appUrl=()=>location.href.split('#')[0];
+const epoch=(k,t)=>{const d=parse(k);const[h,m]=t.split(':').map(Number);d.setHours(h,m,0,0);return Math.floor(d.getTime()/1000)};
+function planReminders(){
+  const n=NT(),priv=n.private!==false,out=[],now=Math.floor(Date.now()/1000),horizon=now+3*86400-300;
+  const add=(key,at,title,body,click)=>{if(at>now+60&&at<horizon)out.push({key,at,title,body,click:click||appUrl()})};
+  for(let i=0;i<4;i++){const k=addDays(TODAY,i);
+    if(n.events!==false)evOf(k).forEach(e=>{if(!e.time)return;const at=epoch(k,e.time)-15*60;
+      add(`ev|${k}|${e.time}|${hash(e.text)}`,at,'Shift Card',priv?`${t12(e.time)}: something on your schedule. Open Shift Card.`:`${e.text} at ${t12(e.time)}${e.loc?', '+e.loc:''}`,!priv&&e.link&&/^https:\/\//i.test(e.link)?e.link:'')});
+    if(n.day!==false&&workday(k)){const D=dayDefs();
+      add(`meet|${k}`,epoch(k,D[0].start),'Shift Card',`${D[0].name} at ${t12(D[0].start)}. Start the work timer.`);
+      D.slice(1).forEach(d=>add(`brk|${k}|${d.id}|${d.start}`,epoch(k,d.start),'Shift Card',`${d.name}, ${t12(d.start)} to ${t12(d.end)}. Log it in Shift Card.`));
+      add(`shut|${k}`,epoch(k,'16:20'),'Shift Card','Stop the work timer and do your shutdown.')}
+    if(n.tasks!==false){const due=tasks().filter(x=>!x.done&&x.due===k);if(due.length)add(`task|${k}|${due.length}`,epoch(k,'07:00'),'Shift Card',priv?`${due.length} task${due.length>1?'s':''} due today.`:'Due today: '+due.map(x=>x.t).join('; '))}
+  }
+  return out;
+}
+const ntPost=(m,at)=>{const q=new URLSearchParams({title:m.title,click:m.click,tags:'clipboard'});if(at)q.set('at',String(at));
+  return fetch(`${ntServer()}/${encodeURIComponent(NT().topic)}?${q}`,{method:'POST',body:m.body,headers:{'Content-Type':'text/plain'}}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r})};
+let ntBusy=false,ntTimer;
+async function ntSync(){
+  const n=NT();if(!n.on||!n.topic||ntBusy||!navigator.onLine)return;ntBusy=true;
+  const sent={...(n.sent||{})},now=Math.floor(Date.now()/1000);for(const k of Object.keys(sent))if(sent[k]<now-86400)delete sent[k];
+  let ok=0,fail=0;
+  for(const m of planReminders()){if(sent[m.key])continue;try{await ntPost(m,m.at);sent[m.key]=m.at;ok++;await new Promise(r=>setTimeout(r,250))}catch(e){fail++;break}}
+  setNT({sent,lastSync:Date.now(),lastErr:fail?'Could not reach the ntfy server. It will try again next time the app opens.':''});ntBusy=false;renderNT();
+}
+const ntQueue=()=>{if(!NT().on)return;clearTimeout(ntTimer);ntTimer=setTimeout(ntSync,4000)};
+function renderNT(){if(!$('ntBox'))return;const n=NT(),on=!!n.on;
+  $('ntOn').checked=on;$('ntOpts').hidden=!on;if(!on)return;
+  $('ntTopic').textContent=n.topic||'';if(document.activeElement!==$('ntServer'))$('ntServer').value=n.server||'https://ntfy.sh';
+  $('ntPriv').checked=n.private!==false;$('ntEv').checked=n.events!==false;$('ntDay').checked=n.day!==false;$('ntTk').checked=n.tasks!==false;
+  const c=Object.values(n.sent||{}).filter(t=>t>Date.now()/1000).length;
+  $('ntStatus').textContent=(n.lastErr?n.lastErr+' ':'')+(n.lastSync?`${c} reminder${c===1?'':'s'} scheduled for the next 3 days. Last checked ${new Date(n.lastSync).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}.`:'Nothing scheduled yet.');}
+$('ntOn').onchange=e=>{if(e.target.checked){setNT({on:true,topic:NT().topic||randTopic(),private:NT().private!==false})}else setNT({on:false});renderNT();if(e.target.checked)ntQueue()};
+$('ntPriv').onchange=e=>setNT({private:e.target.checked});
+$('ntEv').onchange=e=>{setNT({events:e.target.checked});ntQueue()};$('ntDay').onchange=e=>{setNT({day:e.target.checked});ntQueue()};$('ntTk').onchange=e=>{setNT({tasks:e.target.checked});ntQueue()};
+$('ntServer').onchange=e=>{const v=e.target.value.trim();if(v&&!/^https:\/\//i.test(v)){say('ntMsg','The server has to start with https://',1);return}setNT({server:v||'https://ntfy.sh',sent:{}});say('ntMsg','Server saved.');ntQueue()};
+$('ntCopy').onclick=()=>copyText(NT().topic||'','ntMsg');
+$('ntTest').onclick=()=>{ntPost({title:'Shift Card',body:'Test notification. If you can read this, reminders are working.',click:appUrl()}).then(()=>say('ntMsg','Test sent. It should show up on your phone in a few seconds.')).catch(()=>say('ntMsg',"Couldn't reach the ntfy server. Check your connection.",1))};
+$('ntNow').onclick=()=>{say('ntMsg','Scheduling...');ntSync().then(()=>say('ntMsg',NT().lastErr?NT().lastErr:'Reminders are up to date.',!!NT().lastErr))};
+$('ntNew').onclick=()=>{setNT({topic:randTopic(),sent:{}});renderNT();say('ntMsg','New channel made. Subscribe to it in ntfy and unsubscribe from the old one.')};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')ntQueue()});
+window.addEventListener('online',ntQueue);
+window.__ntq=()=>{if(!ntBusy)ntQueue()};
+
 /* ---------- render ---------- */
 function render(){
   renderAlert();
@@ -628,11 +724,12 @@ function render(){
   $('date').textContent=(cur===TODAY?'Today, ':'')+parse(cur).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});$('next').disabled=cur>=TODAY;
   if(tab==='today'){renderNow();renderTasks();renderSched();renderLog();renderCard()}
   else if(tab==='plan')renderPlan();
-  else{if(!$('horizons').contains(document.activeElement))renderReview();renderDefs();renderCatEdit()}
+  else{if(!$('horizons').contains(document.activeElement))renderReview();renderDefs();renderCatEdit();renderNT()}
 }
 setInterval(()=>{if(tab==='today'&&cur===TODAY&&editing<0&&document.activeElement!==$('runWhat')){renderNow();renderTasks();renderLog();renderCard()}},30000);
 try{const t=localStorage.getItem('shiftcard.tab');if(t==='today'||t==='plan'||t==='review')tab=t}catch(e){}
 showTab(tab);
+setTimeout(ntQueue,1500);
 }
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}</script>
